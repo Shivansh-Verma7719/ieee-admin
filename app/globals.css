@@ -2,22 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+@font-face {
+  font-family: 'CodecPro-Regular';
+  src: url('/fonts/CodecPro-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
+
+html {
+  font-family: 'CodecPro-Regular', sans-serif;
+  background-color: #fbfbf8;
+  color: #302f2f;
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #fbfbf8;
+  color: #302f2f;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #23417c;
+  font-family: 'CodecPro-Regular', sans-serif;
+}
+
+p {
+  font-family: 'CodecPro-Regular', sans-serif;
+}
+
+/* hide scrollbar */
+::-webkit-scrollbar {
+  display: none;
 }
 
 @layer utilities {
@@ -25,3 +42,4 @@ body {
     text-wrap: balance;
   }
 }
+
