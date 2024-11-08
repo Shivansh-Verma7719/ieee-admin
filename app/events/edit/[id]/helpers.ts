@@ -47,9 +47,9 @@ export async function updateEvent(
 
 export async function uploadImage(file: File): Promise<string | null> {
   const supabase = createClient();
-  const fileName = `${Date.now()}_${file.name}`;
+  const fileName = `event-${Date.now()}-${file.name}`;
   const { data, error } = await supabase.storage
-    .from("event-images")
+    .from("event_images")
     .upload(fileName, file);
 
   if (error) {
@@ -58,8 +58,23 @@ export async function uploadImage(file: File): Promise<string | null> {
   }
 
   const { data: urlData } = supabase.storage
-    .from("event-images")
+    .from("event_images")
     .getPublicUrl(data.path);
 
   return urlData.publicUrl;
+}
+
+export async function deleteImage(path: string): Promise<void> {
+  const supabase = createClient();
+  const fileName = path.split("/event_images/").pop() || "";
+  // console.log(fileName);
+  const { error } = await supabase.storage
+    .from("event_images")
+    .remove([fileName]);
+
+  // console.log(error);
+
+  if (error) {
+    console.error("Error deleting image:", error);
+  }
 }

@@ -3,7 +3,8 @@ import React from "react";
 import { ExpandableCardDemo } from "@/components/ui/expandableCards";
 import getEvents, { Event } from "@/app/events";
 import { useState, useEffect } from "react";
-import { Skeleton } from "@nextui-org/react";
+import { Plus } from "lucide-react";
+import { Button, Link, Skeleton } from "@nextui-org/react";
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -42,9 +43,17 @@ const EventsPage = () => {
     return (
       <div className="container mx-auto px-8 sm:px-20 lg:px-28 py-12">
         <div className="space-y-8 sm:space-y-10">
-          <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 pt-12 sm:pt-20">
-            Upcoming Events
-          </h1>
+          <div className="flex justify-between items-center mb-6 sm:mb-8 pt-12 sm:pt-20">
+            <h1 className="text-3xl sm:text-4xl font-bold">Upcoming Events</h1>
+            <Button
+              as={Link}
+              href="/events/create"
+              color="primary"
+              startContent={<Plus />}
+            >
+              Add New Event
+            </Button>
+          </div>
           {[...Array(5)].map((_, index) => (
             <EventSkeleton key={`upcoming-${index}`} />
           ))}
@@ -62,9 +71,17 @@ const EventsPage = () => {
   return (
     <div className="container mx-auto px-8 sm:px-20 lg:px-28 py-12">
       <div className="space-y-8 sm:space-y-10">
-        <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 pt-12 sm:pt-20">
-          Upcoming Events
-        </h1>
+        <div className="flex justify-between items-center mb-6 sm:mb-8 pt-12 sm:pt-20">
+          <h1 className="text-3xl sm:text-4xl font-bold">Upcoming Events</h1>
+          <Button
+            as={Link}
+            href="/events/create"
+            color="primary"
+            startContent={<Plus />}
+          >
+            Add New Event
+          </Button>
+        </div>
         <ExpandableCardDemo cards={events} />
         <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 pt-12 sm:pt-20">
           Past Events

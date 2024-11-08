@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MapPin, Image as ImageIcon, X, ShieldAlert } from "lucide-react";
-import { DateValue, parseAbsolute, parseDateTime } from "@internationalized/date";
+import { parseDateTime } from "@internationalized/date";
 import {
   Input,
   Textarea,
@@ -12,9 +12,10 @@ import {
   Card,
   CardHeader,
   CardBody,
+  Spinner
 } from "@nextui-org/react";
 import { motion } from "framer-motion";
-import { getEvent, updateEvent, uploadImage } from "./helpers";
+import { deleteImage, getEvent, updateEvent, uploadImage } from "./helpers";
 
 interface Event {
   id: number;
@@ -40,6 +41,8 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   const [bannerPreviewUrl, setBannerPreviewUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const bannerInputRef = useRef<HTMLInputElement>(null);
+  const [isBannerChanged, setIsBannerChanged] = useState(false);
+  const [isImageChanged, setIsImageChanged] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -98,11 +101,13 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
 
   const removeImage = (isBanner: boolean) => {
     if (isBanner) {
+      setIsBannerChanged(true);
       setBannerImage(null);
-      setBannerPreviewUrl(originalEvent?.banner_image || null);
+      setBannerPreviewUrl(null);
     } else {
+      setIsImageChanged(true);
       setImage(null);
-      setImagePreviewUrl(originalEvent?.image || null);
+      setImagePreviewUrl(null);
     }
   };
 
@@ -113,19 +118,20 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
     setError(null);
 
     try {
-      const updatedFields: Event = { ...event };
-
       // Handle image uploads
-      if (image) {
-        const imageUrl = await uploadImage(image);
-        if (imageUrl) updatedFields.image = imageUrl;
+      if (isImageChanged) {
+        if (originalEvent?.image) await deleteImage(originalEvent.image);
+        const imageUrl = await uploadImage(image as File);
+        if (imageUrl) event.image = imageUrl;
       }
-      if (bannerImage) {
-        const bannerImageUrl = await uploadImage(bannerImage);
-        if (bannerImageUrl) updatedFields.banner_image = bannerImageUrl;
+      if (isBannerChanged) {
+        if (originalEvent?.banner_image)
+          await deleteImage(originalEvent.banner_image);
+        const bannerImageUrl = await uploadImage(bannerImage as File);
+        if (bannerImageUrl) event.banner_image = bannerImageUrl;
       }
 
-      const result = await updateEvent(updatedFields);
+      const result = await updateEvent(event);
       if (result.success) {
         router.push("/events");
       } else {
@@ -140,11 +146,27 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   };
 
   if (loading) {
-    return <div>Loading...</div>;
+    return (
+      <div className="w-full h-screen flex justify-center items-center">
+        <Spinner size="lg" />
+      </div>
+    );
   }
 
   if (error || !event) {
-    return <div>{error || "Event not found"}</div>;
+    return (
+      <div className="w-full h-screen flex justify-center items-center">
+          <Card radius="lg" className="mt-4 bg-red-500/20 p-5" shadow="sm">
+            <CardHeader>
+              <ShieldAlert className="text-red-500 mr-2" />
+              <h1 className="text-red-500">Error</h1>
+            </CardHeader>
+            <CardBody>
+              <p className="text-red-500">{error || "Event not found"}</p>
+            </CardBody>
+          </Card>
+      </div>
+    );
   }
 
   return (
@@ -171,7 +193,10 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
               name="datetime"
               defaultValue={parseDateTime(event.datetime)}
               onChange={(value) =>
-                setEvent({ ...event, datetime: value ? value.toString() : event.datetime })
+                setEvent({
+                  ...event,
+                  datetime: value ? value.toString() : event.datetime,
+                })
               }
             />
             <Input

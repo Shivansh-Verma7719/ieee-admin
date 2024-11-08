@@ -3,7 +3,7 @@ export const getPages = () => {
     { name: "Home", href: "/" },  
     { name: "Login", href: "/login" },
     { name: "Logout", href: "/logout" },
-    { name: "New Event", href: "/events/create" },
     { name: "Events", href: "/events" },
+    { name: "Photos", href: "/photos" },
   ];
 };
