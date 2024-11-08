@@ -6,7 +6,7 @@ interface Photo {
   caption: string;
 }
 
-export async function getPhoto(id: number): Promise<Photo | null> {
+export async function getPhoto(id: number): Promise<{success: boolean, data?: Photo, error?: string}> {
   const supabase = createClient();
   const { data, error } = await supabase
     .from("photos")
@@ -16,10 +16,10 @@ export async function getPhoto(id: number): Promise<Photo | null> {
 
   if (error) {
     console.error("Error fetching photo:", error);
-    return null;
+    return {success: false, error: error.message};
   }
 
-  return data as Photo;
+  return {success: true, data: data as Photo};
 }
 
 export async function updatePhoto(

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from 'next/navigation';
+import { useRouter } from "next/navigation";
 
 export default function Logout() {
   const [isLoggingOut, setIsLoggingOut] = useState(true);
@@ -14,10 +14,12 @@ export default function Logout() {
     const handleLogout = async () => {
       try {
         await supabase.auth.signOut();
-        router.push('/login');
+        router.push("/");
+        router.refresh();
+        setIsLoggingOut(false);
       } catch (err) {
         setError(`An error occurred while logging out: ${err}`);
-        console.error('Error logging out:', err);
+        console.error("Error logging out:", err);
         setIsLoggingOut(false);
       }
     };

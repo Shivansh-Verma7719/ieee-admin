@@ -3,14 +3,7 @@ import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Image as ImageIcon, X, ShieldAlert } from "lucide-react";
-import {
-  Input,
-  Button,
-  Card,
-  CardHeader,
-  CardBody,
-  Spinner,
-} from "@nextui-org/react";
+import { Input, Button, Card, CardHeader, CardBody, Spinner } from "@nextui-org/react";
 import { uploadImage, updatePhoto, getPhoto, deleteImage } from "./helpers";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -22,7 +15,11 @@ interface Photo {
 }
 
 export default function EditPhotoPage({ params }: { params: { id: string } }) {
-  const [photo, setPhoto] = useState<Photo | null>(null);
+  const [photo, setPhoto] = useState<Photo>({
+    id: parseInt(params.id),
+    image_url: "",
+    caption: "",
+  });
   const router = useRouter();
   const [image, setImage] = useState<File | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
@@ -33,65 +30,25 @@ export default function EditPhotoPage({ params }: { params: { id: string } }) {
 
   useEffect(() => {
     const fetchPhoto = async () => {
-      try {
-        const fetchedPhoto = await getPhoto(parseInt(params.id));
-        if (fetchedPhoto) {
-          setPhoto(fetchedPhoto);
-          setImagePreviewUrl(fetchedPhoto.image_url);
+      setLoading(true);
+      await getPhoto(parseInt(params.id)).then((fetchedPhoto) => {
+        if (fetchedPhoto.success) {
+          setPhoto(fetchedPhoto.data!);
+          setImagePreviewUrl(fetchedPhoto.data!.image_url);
         } else {
           setError("Photo not found");
         }
-      } catch (err) {
-        setError("Failed to fetch photo");
-      } finally {
+      }).finally(() => {
         setLoading(false);
-      }
+      });
     };
     fetchPhoto();
   }, [params.id]);
 
-  // If loading, show loading state
-  if (loading) {
-    return (
-      <div className="container mx-auto px-4 py-24">
-        <div className="text-center">
-          <Spinner className="mx-auto" size="lg" />
-          <p className="mt-4 text-lg">Loading photo...</p>
-        </div>
-      </div>
-    );
-  }
-
-  // If error or photo not found, show error state
-  if (error || !photo) {
-    return (
-      <div className="container mx-auto px-4 py-24">
-        <Card className="max-w-md mx-auto">
-          <CardHeader className="flex gap-3">
-            <ShieldAlert className="text-red-500" />
-            <div className="flex flex-col">
-              <p className="text-lg">Error</p>
-              <p className="text-small text-default-500">
-                {error || "Failed to load photo"}
-              </p>
-            </div>
-          </CardHeader>
-          <CardBody>
-            <div className="flex justify-center mt-4">
-              <Button as={Link} href="/photos" color="primary">
-                Return to Photos
-              </Button>
-            </div>
-          </CardBody>
-        </Card>
-      </div>
-    );
-  }
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setPhoto((prevPhoto) => ({
-      ...prevPhoto!,
+      ...prevPhoto,
       [name]: value,
     }));
   };
@@ -110,7 +67,7 @@ export default function EditPhotoPage({ params }: { params: { id: string } }) {
 
   const removeImage = async () => {
     setImage(null);
-    setImagePreviewUrl(photo.image_url);
+    setImagePreviewUrl(null);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
@@ -155,6 +112,42 @@ export default function EditPhotoPage({ params }: { params: { id: string } }) {
       setIsSubmitting(false);
     }
   };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-24">
+        <div className="text-center">
+          <Spinner className="mx-auto" />
+        </div>
+      </div>
+    );
+  }
+
+  // If error or photo not found, show error state
+  if (error || !photo) {
+    return (
+      <div className="container mx-auto px-4 py-24">
+        <Card className="max-w-md mx-auto">
+          <CardHeader className="flex gap-3">
+            <ShieldAlert className="text-red-500" />
+            <div className="flex flex-col">
+              <p className="text-lg">Error</p>
+              <p className="text-small text-default-500">
+                {error || "Failed to load photo"}
+              </p>
+            </div>
+          </CardHeader>
+          <CardBody>
+            <div className="flex justify-center mt-4">
+              <Button as={Link} href="/photos" color="primary">
+                Return to Photos
+              </Button>
+            </div>
+          </CardBody>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto px-4 py-24">
@@ -251,6 +244,7 @@ export default function EditPhotoPage({ params }: { params: { id: string } }) {
           <Button
             color="primary"
             isDisabled={isSubmitting || !photo.caption}
+            
             onClick={handleSubmit}
           >
             {isSubmitting ? "Updating..." : "Update Photo"}

@@ -37,7 +37,15 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const allowedPages = ["/events", "/photos", "/photos/create", "/photos/edit/"];
+  const protectedPages = ["/events", "/photos", "/photos/create", "/photos/edit/"];
+
+  const prohibitedPages = ["/login"];
+
+  if (user && prohibitedPages.includes(request.nextUrl.pathname)) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/";
+    return NextResponse.redirect(url);
+  }
 
   if (
     !user &&
@@ -45,7 +53,7 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/auth") &&
     !request.nextUrl.pathname.startsWith("/logout") &&
     !request.nextUrl.pathname.startsWith("/auth-error") &&
-    !allowedPages.includes(request.nextUrl.pathname)
+    protectedPages.includes(request.nextUrl.pathname)
   ) {
     // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();

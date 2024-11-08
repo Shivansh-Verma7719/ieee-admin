@@ -4,14 +4,26 @@ import { useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import IEEELogo from "@/public/images/logo.png";
-import { getPages } from "./pages";
+import { User } from "@supabase/supabase-js";
 
-const CustomNavbar: React.FC = () => {
+const CustomNavbar: React.FC<{ user: User | null }> = ({ user }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0.8]);
-  const pages = getPages();
-  
+
+  let pages = [
+    { name: "Home", href: "/" },
+    { name: "Logout", href: "/logout" },
+    { name: "Events", href: "/events" },
+    { name: "Photos", href: "/photos" },
+  ];
+
+  if (!user) {
+    pages = [
+      { name: "Home", href: "/" },
+      { name: "Login", href: "/login" },
+    ];
+  }
 
   return (
     <motion.header
@@ -27,12 +39,7 @@ const CustomNavbar: React.FC = () => {
               transition={{ duration: 0.5 }}
               className="flex flex-row items-center justify-center"
             >
-              <Image
-                src={IEEELogo}
-                alt="Quratr logo"
-                width={50}
-                height={50}
-              />
+              <Image src={IEEELogo} alt="Quratr logo" width={50} height={50} />
             </motion.div>
           </a>
           <div className="hidden md:flex space-x-1">
