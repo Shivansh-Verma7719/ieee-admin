@@ -37,7 +37,7 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const allowedPages = ["/events", "/photos", "/photos/create"];
+  const allowedPages = ["/events", "/photos", "/photos/create", "/photos/edit/"];
 
   if (
     !user &&

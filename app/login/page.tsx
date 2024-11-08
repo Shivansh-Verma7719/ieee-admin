@@ -37,9 +37,6 @@ export default function Login() {
   return (
     <div className="flex flex-col items-center justify-center min-h-screen w-full p-10 md:p-0 md:w-1/2 mx-auto">
       <h1 className="text-3xl font-bold mb-6">Login</h1>
-      <p className="text-sm text-gray-500 mb-6">
-        Please enter your email to continue
-      </p>
       <Button
         onClick={handleLogin}
         startContent={
