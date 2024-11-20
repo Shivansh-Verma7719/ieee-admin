@@ -263,10 +263,9 @@ export default function CreateEventPage() {
                     </button>
                   </div>
                 )}
-                <Input
+                <input
                   type="file"
-                  label="Event Banner Image"
-                  isRequired
+                  required
                   accept="image/*"
                   onChange={(e) => handleImageChange(e, true)}
                   className="hidden"
@@ -324,10 +323,9 @@ export default function CreateEventPage() {
                     </button>
                   </div>
                 )}
-                <Input
+                <input
                   type="file"
-                  label="Event Image"
-                  isRequired
+                  required
                   accept="image/*"
                   onChange={(e) => handleImageChange(e, false)}
                   className="hidden"
