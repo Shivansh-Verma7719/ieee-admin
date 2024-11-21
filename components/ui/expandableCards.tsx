@@ -82,7 +82,6 @@ export function ExpandableCardDemo({ cards }: { cards: Event[] }) {
                   <motion.a
                     layoutId={`button-${active.name}-${id}`}
                     href={`/events/${active.id}`}
-                    target="_blank"
                     className="px-4 py-3 text-sm rounded-full font-bold bg-[#f186c1] text-white"
                   >
                     View Event
