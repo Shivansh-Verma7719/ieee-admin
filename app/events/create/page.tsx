@@ -213,7 +213,6 @@ export default function CreateEventPage() {
               name="register"
               value={event.register}
               onChange={handleInputChange}
-              isRequired
             />
             <Input
               label="Event One Liner"
