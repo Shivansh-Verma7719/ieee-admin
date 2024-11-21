@@ -12,7 +12,7 @@ import {
   Card,
   CardHeader,
   CardBody,
-  Spinner
+  Spinner,
 } from "@nextui-org/react";
 import { motion } from "framer-motion";
 import { deleteImage, getEvent, updateEvent, uploadImage } from "./helpers";
@@ -156,15 +156,15 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
   if (error || !event) {
     return (
       <div className="w-full h-screen flex justify-center items-center">
-          <Card radius="lg" className="mt-4 bg-red-500/20 p-5" shadow="sm">
-            <CardHeader>
-              <ShieldAlert className="text-red-500 mr-2" />
-              <h1 className="text-red-500">Error</h1>
-            </CardHeader>
-            <CardBody>
-              <p className="text-red-500">{error || "Event not found"}</p>
-            </CardBody>
-          </Card>
+        <Card radius="lg" className="mt-4 bg-red-500/20 p-5" shadow="sm">
+          <CardHeader>
+            <ShieldAlert className="text-red-500 mr-2" />
+            <h1 className="text-red-500">Error</h1>
+          </CardHeader>
+          <CardBody>
+            <p className="text-red-500">{error || "Event not found"}</p>
+          </CardBody>
+        </Card>
       </div>
     );
   }
@@ -219,7 +219,6 @@ export default function EditEventPage({ params }: { params: { id: string } }) {
               name="register"
               value={event.register}
               onChange={handleInputChange}
-              isRequired
             />
             <Input
               label="Event One Liner"
