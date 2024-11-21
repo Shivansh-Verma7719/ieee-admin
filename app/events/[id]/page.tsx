@@ -10,7 +10,7 @@ import { Button, Skeleton } from "@nextui-org/react";
 export default function EventPage({ params }: { params: { id: string } }) {
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     const fetchEvent = async () => {
       try {
@@ -84,9 +84,15 @@ export default function EventPage({ params }: { params: { id: string } }) {
             Event Details
           </h2>
           <div className="flex justify-between items-center mb-4">
-            <h3 className="text-xl font-semibold text-[#302f2f]">{event.category}</h3>
+            <h3 className="text-xl font-semibold text-[#302f2f]">
+              {event.category}
+            </h3>
             <Link href={`/events/edit/${event.id}`}>
-              <Button color="primary" variant="flat" startContent={<Edit className="w-4 h-4" />}>
+              <Button
+                color="primary"
+                variant="flat"
+                startContent={<Edit className="w-4 h-4" />}
+              >
                 Edit Event
               </Button>
             </Link>
@@ -102,14 +108,16 @@ export default function EventPage({ params }: { params: { id: string } }) {
           </p>
         </div>
 
-        <div className="bg-white shadow-lg rounded-lg p-6 flex items-center justify-center md:w-1/4 h-auto">
-          <a
-            href={event.register}
-            className="inline-block text-lg bg-blue-600 text-white font-bold py-2 px-6 m-auto rounded-lg hover:bg-blue-700 transition"
-          >
-            Register Now
-          </a>
-        </div>
+        {event.register !== "" && event.register !== null && (
+          <div className="bg-white shadow-lg rounded-lg p-6 flex items-center justify-center md:w-1/4 h-auto">
+            <a
+              href={event.register}
+              className="inline-block text-lg bg-blue-600 text-white font-bold py-2 px-6 m-auto rounded-lg hover:bg-blue-700 transition"
+            >
+              Register Now
+            </a>
+          </div>
+        )}
       </div>
       {/* Event Description Section */}
       <div className="bg-white shadow-lg rounded-lg p-6 mt-4">
