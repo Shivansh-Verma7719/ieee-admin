@@ -44,7 +44,7 @@ const EventsPage = () => {
       <div className="container mx-auto px-8 sm:px-20 lg:px-28 py-12">
         <div className="space-y-8 sm:space-y-10">
           <div className="flex justify-between items-center mb-6 sm:mb-8 pt-12 sm:pt-20">
-            <h1 className="text-3xl sm:text-4xl font-bold">Upcoming Events</h1>
+            <h1 className="text-3xl sm:text-4xl font-bold">Our Events</h1>
             <Button
               as={Link}
               href="/events/create"
@@ -57,12 +57,6 @@ const EventsPage = () => {
           {[...Array(5)].map((_, index) => (
             <EventSkeleton key={`upcoming-${index}`} />
           ))}
-          <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 pt-12 sm:pt-20">
-            Past Events
-          </h1>
-          {[...Array(5)].map((_, index) => (
-            <EventSkeleton key={`past-${index}`} />
-          ))}
         </div>
       </div>
     );
@@ -72,7 +66,7 @@ const EventsPage = () => {
     <div className="container mx-auto px-8 sm:px-20 lg:px-28 py-12">
       <div className="space-y-8 sm:space-y-10">
         <div className="flex justify-between items-center mb-6 sm:mb-8 pt-12 sm:pt-20">
-          <h1 className="text-3xl sm:text-4xl font-bold">Upcoming Events</h1>
+          <h1 className="text-3xl sm:text-4xl font-bold">Our Events</h1>
           <Button
             as={Link}
             href="/events/create"
@@ -82,10 +76,6 @@ const EventsPage = () => {
             Add New Event
           </Button>
         </div>
-        <ExpandableCardDemo cards={events} />
-        <h1 className="text-3xl sm:text-4xl font-bold mb-6 sm:mb-8 pt-12 sm:pt-20">
-          Past Events
-        </h1>
         <ExpandableCardDemo cards={events} />
       </div>
     </div>
