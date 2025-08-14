@@ -71,7 +71,7 @@ export async function deleteImage(path: string): Promise<boolean> {
 //   console.log("data", data);
 //   console.log("error", error);
 
-  let result = error && !data ? false : true;
+  const result = error && !data ? false : true;
 //   console.log("result", result);
   return result;
 }

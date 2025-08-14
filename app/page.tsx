@@ -1,11 +1,16 @@
 import { createClient } from "@/utils/supabase/server";
 import HomePageWrapper from "@/components/homePageWrapper";
+import { JwtClaims } from "@/types/supabase";
 
 export default async function Home() {
   const supabase = createClient();
   const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    data,
+  } = await supabase.auth.getClaims();
 
-  return <HomePageWrapper user={user} />;
+  if (!data) {
+    return <HomePageWrapper user={null} />;
+  }
+
+  return <HomePageWrapper user={data.claims as JwtClaims} />;
 }

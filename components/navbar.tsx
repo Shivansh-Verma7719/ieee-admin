@@ -5,9 +5,8 @@ import { useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Menu, X } from "lucide-react";
 import IEEELogo from "@/public/images/logo.png";
-import { User } from "@supabase/supabase-js";
-
-const CustomNavbar: React.FC<{ user: User | null }> = ({ user }) => {
+import { JwtClaims } from "@/types/supabase";
+const CustomNavbar: React.FC<{ user: JwtClaims | null }> = ({ user }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { scrollYProgress } = useScroll();
   const headerOpacity = useTransform(scrollYProgress, [0, 0.1], [1, 0.8]);

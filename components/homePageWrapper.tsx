@@ -1,9 +1,9 @@
 "use client";
+import { JwtClaims } from "@/types/supabase";
 import { Button } from "@heroui/react";
 import Link from "next/link";
-import { User } from "@supabase/supabase-js";
 
-export default function HomePageWrapper({ user }: { user: User | null }) {
+export default function HomePageWrapper({ user }: { user: JwtClaims | null }) {
 
   return (
     <div className="flex flex-col items-center justify-center h-screen">

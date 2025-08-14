@@ -30,14 +30,20 @@ export async function updateSession(request: NextRequest) {
   );
 
   // IMPORTANT: Avoid writing any logic between createServerClient and
-  // supabase.auth.getUser(). A simple mistake could make it very hard to debug
+  // supabase.auth.getClaims(). A simple mistake could make it very hard to debug
   // issues with users being randomly logged out.
+  // const startTime = Date.now();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { data } = await supabase.auth.getClaims();
 
-  const protectedPages = ["/events", "/photos", "/photos/create", "/photos/edit/"];
+  const user = data?.claims || null;
+
+  const protectedPages = [
+    "/events",
+    "/photos",
+    "/photos/create",
+    "/photos/edit/",
+  ];
 
   const prohibitedPages = ["/login"];
 
@@ -55,11 +61,13 @@ export async function updateSession(request: NextRequest) {
     !request.nextUrl.pathname.startsWith("/auth-error") &&
     protectedPages.includes(request.nextUrl.pathname)
   ) {
-    // no user, potentially respond by redirecting the user to the login page
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
   }
+
+  // const duration = Date.now() - startTime;
+  // console.log(`Middleware duration: ${duration}ms`);
 
   // IMPORTANT: You *must* return the supabaseResponse object as it is. If you're
   // creating a new response object with NextResponse.next() make sure to:
