@@ -9,7 +9,7 @@ import {
   Card,
   CardHeader,
   CardBody,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { uploadImage, createPhoto } from "./helpers";
 import Image from "next/image";
 import { motion } from "framer-motion";

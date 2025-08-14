@@ -11,7 +11,7 @@ import {
   Card,
   CardHeader,
   CardBody,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { uploadImage, createEvent } from "./helpers";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -26,6 +26,7 @@ interface Event {
   location: string;
   description: string;
   one_liner: string;
+  poster_image: string;
 }
 
 export default function CreateEventPage() {
@@ -39,6 +40,7 @@ export default function CreateEventPage() {
     location: "",
     description: "",
     one_liner: "",
+    poster_image: "",
   });
   const router = useRouter();
   const [image, setImage] = useState<File | null>(null);
@@ -56,14 +58,14 @@ export default function CreateEventPage() {
 
   const validateEvent = () => {
     return (
-      event.name &&
+      // Check if register is a valid URL
+      (event.name &&
       event.category &&
       event.register &&
       event.one_liner &&
       event.datetime &&
       event.location &&
-      event.description &&
-      /^https?:\/\/.+/.test(event.register) // Check if register is a valid URL
+      event.description && /^https?:\/\/.+/.test(event.register))
     );
   };
 
@@ -148,6 +150,7 @@ export default function CreateEventPage() {
           category: "",
           one_liner: "",
           register: "",
+          poster_image: "",
         });
         setImage(null);
         setBannerImage(null);

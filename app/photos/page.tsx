@@ -12,8 +12,7 @@ import {
   ModalFooter,
   useDisclosure,
   Button,
-  Spinner,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { getPhotos, deletePhoto } from "./helpers";
 
 interface Photo {
@@ -59,7 +58,7 @@ export default function PhotosPage() {
       onClose();
       setIsLoading(false);
     };
-  
+
     return (
       <Modal isOpen={isOpen} onOpenChange={onClose}>
         <ModalContent>
@@ -135,15 +134,15 @@ export default function PhotosPage() {
               >
                 <Trash2 size={16} />
               </Button>
-              </div>
-            </motion.div>
-            ))}
-        </div>
+            </div>
+          </motion.div>
+        ))}
+      </div>
       <DeleteModal
         isOpen={isOpen}
         onClose={onOpenChange}
         id={selectedPhotoId || 0}
-          onDeleteSuccess={fetchPhotos}
+        onDeleteSuccess={fetchPhotos}
       />
     </div>
   );

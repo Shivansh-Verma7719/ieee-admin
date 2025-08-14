@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, use } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { MapPin, Image as ImageIcon, X, ShieldAlert } from "lucide-react";
@@ -13,7 +13,7 @@ import {
   CardHeader,
   CardBody,
   Spinner,
-} from "@nextui-org/react";
+} from "@heroui/react";
 import { motion } from "framer-motion";
 import { deleteImage, getEvent, updateEvent, uploadImage } from "./helpers";
 
@@ -30,7 +30,8 @@ interface Event {
   one_liner: string;
 }
 
-export default function EditEventPage({ params }: { params: { id: string } }) {
+export default function EditEventPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [event, setEvent] = useState<Event | null>(null);
   const [originalEvent, setOriginalEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);

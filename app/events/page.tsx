@@ -4,7 +4,7 @@ import { ExpandableCardDemo } from "@/components/ui/expandableCards";
 import getEvents, { Event } from "@/app/events";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
-import { Button, Link, Skeleton } from "@nextui-org/react";
+import { Button, Link, Skeleton } from "@heroui/react";
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);

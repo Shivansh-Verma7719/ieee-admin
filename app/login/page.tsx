@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
-import { Button } from "@nextui-org/button";
+import { Button } from "@heroui/react";
 import Image from "next/image";
 import Google from "@/public/images/google.png";
 

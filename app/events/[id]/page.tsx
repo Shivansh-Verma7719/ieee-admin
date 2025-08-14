@@ -1,13 +1,14 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, use } from "react";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { Calendar, MapPin, Clock, Edit } from "lucide-react";
 import getEvents, { Event } from "@/app/events";
-import { Button, Skeleton } from "@nextui-org/react";
+import { Button, Skeleton } from "@heroui/react";
 
-export default function EventPage({ params }: { params: { id: string } }) {
+export default function EventPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [event, setEvent] = useState<Event | null>(null);
   const [loading, setLoading] = useState(true);
 

@@ -1,19 +1,22 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap");
+@import "tailwindcss";
+
+@plugin './hero.ts';
+@plugin "@tailwindcss/typography";
+
+@source '../node_modules/@heroui/theme/dist/**/*.{js,ts,jsx,tsx}';
+@custom-variant dark (&:is(.dark *));
 
 @font-face {
-  font-family: 'CodecPro-Regular';
-  src: url('/fonts/CodecPro-Regular.ttf') format('truetype');
+  font-family: "CodecPro-Regular";
+  src: url("/fonts/CodecPro-Regular.ttf") format("truetype");
   font-weight: normal;
   font-style: normal;
   font-display: swap;
 }
 
-@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap');
-
 html {
-  font-family: 'CodecPro-Regular', sans-serif;
+  font-family: "CodecPro-Regular", sans-serif;
   background-color: #fbfbf8;
   color: #302f2f;
 }
@@ -23,13 +26,18 @@ body {
   color: #302f2f;
 }
 
-h1, h2, h3, h4, h5, h6 {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
   color: #23417c;
-  font-family: 'CodecPro-Regular', sans-serif;
+  font-family: "CodecPro-Regular", sans-serif;
 }
 
 p {
-  font-family: 'CodecPro-Regular', sans-serif;
+  font-family: "CodecPro-Regular", sans-serif;
 }
 
 /* hide scrollbar */
@@ -42,4 +50,3 @@ p {
     text-wrap: balance;
   }
 }
-

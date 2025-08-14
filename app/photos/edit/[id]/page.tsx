@@ -1,9 +1,9 @@
 "use client";
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, use } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Image as ImageIcon, X, ShieldAlert } from "lucide-react";
-import { Input, Button, Card, CardHeader, CardBody, Spinner } from "@nextui-org/react";
+import { Input, Button, Card, CardHeader, CardBody, Spinner } from "@heroui/react";
 import { uploadImage, updatePhoto, getPhoto, deleteImage } from "./helpers";
 import Image from "next/image";
 import { motion } from "framer-motion";
@@ -14,7 +14,8 @@ interface Photo {
   caption: string;
 }
 
-export default function EditPhotoPage({ params }: { params: { id: string } }) {
+export default function EditPhotoPage(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params);
   const [photo, setPhoto] = useState<Photo>({
     id: parseInt(params.id),
     image_url: "",
