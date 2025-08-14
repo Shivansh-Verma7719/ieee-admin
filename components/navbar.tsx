@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 import { useState } from "react";
 import { motion, useTransform, useScroll } from "framer-motion";
 import { Menu, X } from "lucide-react";
@@ -32,7 +33,7 @@ const CustomNavbar: React.FC<{ user: User | null }> = ({ user }) => {
     >
       <nav className="container mx-auto px-4 sm:px-6 py-2">
         <div className="flex justify-between items-center">
-          <a href="/">
+          <Link href="/">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -41,7 +42,7 @@ const CustomNavbar: React.FC<{ user: User | null }> = ({ user }) => {
             >
               <Image src={IEEELogo} alt="Quratr logo" width={50} height={50} />
             </motion.div>
-          </a>
+          </Link>
           <div className="hidden md:flex space-x-1">
             {pages.map((item) => (
               <motion.a
@@ -82,14 +83,14 @@ const CustomNavbar: React.FC<{ user: User | null }> = ({ user }) => {
         >
           <div className="container mx-auto px-4 flex flex-col space-y-2">
             {pages.map((item) => (
-              <a
+              <Link
                 key={item.name}
                 href={item.href}
                 className="text-gray-600 hover:text-gray-900 px-3 py-2 rounded-md font-semibold transition-colors"
                 onClick={() => setIsMenuOpen(false)}
               >
                 {item.name}
-              </a>
+              </Link>
             ))}
           </div>
         </motion.div>

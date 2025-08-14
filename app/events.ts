@@ -15,7 +15,7 @@ export interface Event {
 }
 export default async function getEvents() {
     const supabase = createClient();
-    let { data, error } = await supabase.from("events").select("*");
+    const { data, error } = await supabase.from("events").select("*");
     if (error || !data) {
         console.error(error);
         return [];

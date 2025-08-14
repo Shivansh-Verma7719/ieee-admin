@@ -42,7 +42,7 @@ export async function createEvent(
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
 
-  const { data, error } = await supabase.from("events").insert([eventData]);
+  const { error } = await supabase.from("events").insert([eventData]);
 
   if (error) {
     console.error("Error creating event:", error);

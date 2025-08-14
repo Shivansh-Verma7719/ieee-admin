@@ -6,7 +6,7 @@ export default async function AuthError() {
     <div className="flex flex-col items-center justify-center min-h-screen p-2">
       <main className="flex flex-col items-center justify-center w-full flex-1 px-20 text-center">
         <h1 className="text-5xl font-bold">
-          You're not authorized to access this platform
+          You&apos;re not authorized to access this platform
         </h1>
         <p className="mt-3 text-2xl">
           Only IEEE members are allowed to access this platform.
