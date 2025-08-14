@@ -9,7 +9,7 @@ export function ExpandableCardDemo({ cards }: { cards: Event[] }) {
   const [active, setActive] = useState<(typeof cards)[number] | boolean | null>(
     null
   );
-  const ref = useRef<HTMLDivElement>(null);
+  const ref = useRef<HTMLDivElement>(null!);
   const id = useId();
 
   useEffect(() => {
@@ -47,11 +47,17 @@ export function ExpandableCardDemo({ cards }: { cards: Event[] }) {
         {active && typeof active === "object" ? (
           <div className="fixed inset-0 m-5 md:m-0 grid place-items-center z-[100]">
             <motion.div
-              layoutId={`card-${active.name}-${id}`}
+              layoutId={`card-${active.name}-${id}-${cards.findIndex(
+                (card) => card.name === active.name
+              )}`}
               ref={ref}
               className="w-full max-w-[500px] h-fit md:max-h-[90%] flex flex-col bg-[#fbfbf8] rounded-3xl overflow-hidden"
             >
-              <motion.div layoutId={`image-${active.name}-${id}`}>
+              <motion.div
+                layoutId={`image-${active.name}-${id}-${cards.findIndex(
+                  (card) => card.name === active.name
+                )}`}
+              >
                 <Image
                   priority
                   width={300}
@@ -66,21 +72,36 @@ export function ExpandableCardDemo({ cards }: { cards: Event[] }) {
                 <div className="flex justify-between items-start p-4">
                   <div className="">
                     <motion.h3
-                      layoutId={`title-${active.name}-${id}`}
-                      className="font-bold text-neutral-700 "
+                      layoutId={`title-${active.name}-${id}-${cards.findIndex(
+                        (card) => card.name === active.name
+                      )}`}
+                      className="font-bold text-neutral-700"
                     >
                       {active.name}
                     </motion.h3>
                     <motion.p
-                      layoutId={`description-${active.category}-${id}`}
+                      layoutId={`description-category-${active.name
+                        }-${id}-${cards.findIndex(
+                          (card) => card.name === active.name
+                        )}`}
                       className="text-neutral-600"
                     >
                       {active.category}
                     </motion.p>
+                    <motion.p
+                      layoutId={`description-date-${active.name}-${id}-${cards.findIndex(
+                        (card) => card.name === active.name
+                      )}`}
+                      className="text-neutral-600"
+                    >
+                      {active.date}
+                    </motion.p>
                   </div>
 
                   <motion.a
-                    layoutId={`button-${active.name}-${id}`}
+                    layoutId={`button-${active.name}-${id}-${cards.findIndex(
+                      (card) => card.name === active.name
+                    )}`}
                     href={`/events/${active.id}`}
                     className="px-4 py-3 text-sm rounded-full font-bold bg-[#f186c1] text-white"
                   >
@@ -106,13 +127,13 @@ export function ExpandableCardDemo({ cards }: { cards: Event[] }) {
       <ul className="mx-auto w-full gap-4">
         {cards.map((card, index) => (
           <motion.div
-            layoutId={`card-${card.name}-${id}`}
-            key={`card-${card.name}-${id}`}
+            layoutId={`card-${card.name}-${id}-${index}`}
+            key={`card-${card.name}-${id}-${index}`}
             onClick={() => setActive(card)}
             className="p-6 flex flex-col md:flex-row justify-between items-center rounded-xl cursor-pointer shadow-md"
           >
             <div className="flex gap-4 flex-col md:flex-row items-center md:items-start">
-              <motion.div layoutId={`image-${card.name}-${id}`}>
+              <motion.div layoutId={`image-${card.name}-${id}-${index}`}>
                 <Image
                   width={200}
                   height={200}
@@ -123,19 +144,19 @@ export function ExpandableCardDemo({ cards }: { cards: Event[] }) {
               </motion.div>
               <div className="">
                 <motion.h2
-                  layoutId={`title-${card.name}-${id}`}
+                  layoutId={`title-${card.name}-${id}-${index}`}
                   className="text-xl font-bold text-neutral-800 text-center md:text-left"
                 >
                   {card.name}
                 </motion.h2>
                 <motion.p
-                  layoutId={`description-${card.category}-${id}`}
+                  layoutId={`description-category-${card.name}-${id}-${index}`}
                   className="text-neutral-600 text-center md:text-left"
                 >
                   {card.category}
                 </motion.p>
                 <motion.p
-                  layoutId={`description-${card.date}-${id}`}
+                  layoutId={`description-date-${card.name}-${id}-${index}`}
                   className="text-neutral-600 text-center md:text-left"
                 >
                   {card.date}
@@ -143,7 +164,7 @@ export function ExpandableCardDemo({ cards }: { cards: Event[] }) {
               </div>
             </div>
             <motion.button
-              layoutId={`button-${card.name}-${id}`}
+              layoutId={`button-${card.name}-${id}-${index}`}
               className="px-4 py-2 text-sm rounded-full font-bold bg-gray-100 hover:bg-[#f186c1] hover:text-white text-black transition-all duration-100 mt-4 md:mt-0"
             >
               Learn More
