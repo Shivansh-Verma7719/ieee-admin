@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import CustomNavbar from "@/components/navbar";
+import { SidebarDemo } from "@/components/Sidebar";
 import { createClient } from "@/utils/supabase/server";
 import { JwtClaims } from "@/types/supabase";
 
@@ -27,8 +27,9 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background text-foreground antialiased">
-        <CustomNavbar user={user} />
-        {children}
+        <SidebarDemo user={user}>
+          {children}
+        </SidebarDemo>
       </body>
     </html>
   );
