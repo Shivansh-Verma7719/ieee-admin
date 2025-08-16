@@ -110,31 +110,94 @@ export default function TeamPage() {
             };
 
             if (editingPerson) {
-                await updatePerson(editingPerson.id, personData);
+                // Optimistic update for editing
+                const updatedPeople = people.map(person =>
+                    person.id === editingPerson.id
+                        ? {
+                            ...person,
+                            ...personData,
+                            role: roles.find(r => r.id === personData.role_id) || person.role,
+                            team: teams.find(t => t.id === personData.team_id) || person.team
+                        }
+                        : person
+                );
+                setPeople(updatedPeople);
+
+                // Update database in background
+                const result = await updatePerson(editingPerson.id, personData);
+                if (!result.success) {
+                    // Revert on failure
+                    setPeople(people);
+                    alert("Failed to update person");
+                    return;
+                }
             } else {
-                await createPerson(personData);
+                // For new people, add optimistically
+                const newPerson: Person = {
+                    id: Date.now(), // Temporary ID
+                    ...personData,
+                    role: roles.find(r => r.id === personData.role_id) || undefined,
+                    team: teams.find(t => t.id === personData.team_id) || undefined,
+                    created_at: new Date().toISOString()
+                };
+
+                setPeople([...people, newPerson]);
+
+                // Create in database
+                const result = await createPerson(personData);
+                if (!result.success) {
+                    // Revert on failure
+                    setPeople(people);
+                    alert("Failed to create person");
+                    return;
+                } else {
+                    // Refresh to get the real ID and proper relations from database
+                    const [peopleData] = await Promise.all([
+                        getPeople(),
+                    ]);
+                    setPeople(peopleData);
+                }
             }
 
-            await fetchData();
             resetPersonForm();
             onPersonModalClose();
         } catch (error) {
             console.error("Error saving person:", error);
+            // Revert optimistic update on error
+            if (editingPerson) {
+                setPeople(people);
+            } else {
+                setPeople(people);
+            }
         } finally {
             setSaving(false);
         }
     };
 
     const handleDeletePerson = async (id: number) => {
-        await deletePerson(id);
-        await fetchData();
+        // Optimistic update - remove from local state immediately
+        const updatedPeople = people.filter(person => person.id !== id);
+        setPeople(updatedPeople);
+
+        // Update database in background
+        const result = await deletePerson(id);
+        if (!result.success) {
+            // Revert on failure
+            setPeople(people);
+            alert("Failed to delete person");
+        }
     };
 
     const handleDeleteTeam = async (teamId: number) => {
+        // Optimistic update - remove from local state immediately
+        const updatedTeams = teams.filter(team => team.id !== teamId);
+        setTeams(updatedTeams);
+
+        // Update database in background
         const result = await deleteTeam(teamId);
-        if (result.success) {
-            await fetchData();
-        } else {
+        if (!result.success) {
+            // Revert on failure
+            setTeams(teams);
             alert(result.error || "Failed to delete team");
         }
     };
@@ -148,14 +211,29 @@ export default function TeamPage() {
 
         if (currentIndex > 0) {
             const teamAbove = sortedTeams[currentIndex - 1];
+
+            // Optimistic update - update local state immediately
+            const updatedTeams = teams.map(team => {
+                if (team.id === currentTeam.id) {
+                    return { ...team, display_order: teamAbove.display_order || 0 };
+                } else if (team.id === teamAbove.id) {
+                    return { ...team, display_order: currentTeam.display_order || 0 };
+                }
+                return team;
+            });
+            setTeams(updatedTeams);
+
+            // Update database in background
             const updates = [
                 { id: currentTeam.id, display_order: teamAbove.display_order || 0 },
                 { id: teamAbove.id, display_order: currentTeam.display_order || 0 }
             ];
 
             const result = await updateTeamOrder(updates);
-            if (result.success) {
-                await fetchData();
+            if (!result.success) {
+                // Revert on failure
+                setTeams(teams);
+                alert("Failed to update team order");
             }
         }
     };
@@ -169,27 +247,56 @@ export default function TeamPage() {
 
         if (currentIndex < sortedTeams.length - 1) {
             const teamBelow = sortedTeams[currentIndex + 1];
+
+            // Optimistic update - update local state immediately
+            const updatedTeams = teams.map(team => {
+                if (team.id === currentTeam.id) {
+                    return { ...team, display_order: teamBelow.display_order || 0 };
+                } else if (team.id === teamBelow.id) {
+                    return { ...team, display_order: currentTeam.display_order || 0 };
+                }
+                return team;
+            });
+            setTeams(updatedTeams);
+
+            // Update database in background
             const updates = [
                 { id: currentTeam.id, display_order: teamBelow.display_order || 0 },
                 { id: teamBelow.id, display_order: currentTeam.display_order || 0 }
             ];
 
             const result = await updateTeamOrder(updates);
-            if (result.success) {
-                await fetchData();
+            if (!result.success) {
+                // Revert on failure
+                setTeams(teams);
+                alert("Failed to update team order");
             }
         }
     };
 
     const handleReorderMembers = async (teamId: number, newOrder: Person[]) => {
+        // Optimistic update - update local state immediately
+        const updatedPeople = people.map(person => {
+            const newPerson = newOrder.find(p => p.id === person.id);
+            if (newPerson && person.team_id === teamId) {
+                const newIndex = newOrder.findIndex(p => p.id === person.id);
+                return { ...person, display_order: newIndex + 1 };
+            }
+            return person;
+        });
+        setPeople(updatedPeople);
+
+        // Update database in background
         const updates = newOrder.map((person, index) => ({
             id: person.id,
             display_order: index + 1
         }));
 
         const result = await updatePersonOrder(updates);
-        if (result.success) {
-            await fetchData();
+        if (!result.success) {
+            // Revert on failure
+            setPeople(people);
+            alert("Failed to update member order");
         }
     };
 
@@ -206,22 +313,66 @@ export default function TeamPage() {
         setSaving(true);
         try {
             if (editingTeam) {
-                // For editing, only update the name, keep the existing display_order
-                await updateTeam(editingTeam.id, { name: teamForm.name });
+                // Optimistic update for team editing
+                const updatedTeams = teams.map(team =>
+                    team.id === editingTeam.id
+                        ? { ...team, name: teamForm.name }
+                        : team
+                );
+                setTeams(updatedTeams);
+
+                // Update database in background
+                const result = await updateTeam(editingTeam.id, { name: teamForm.name });
+                if (!result.success) {
+                    // Revert on failure
+                    setTeams(teams);
+                    alert("Failed to update team");
+                    return;
+                }
             } else {
-                // For new teams, automatically assign the next display_order
+                // For new teams, add optimistically
                 const maxOrder = Math.max(...teams.map(t => t.display_order || 0), 0);
+                const newTeam = {
+                    id: Date.now(), // Temporary ID
+                    name: teamForm.name,
+                    display_order: maxOrder + 1,
+                    created_at: new Date().toISOString(),
+                    updated_at: new Date().toISOString()
+                };
+
+                setTeams([...teams, newTeam]);
+
+                // Create in database
                 const teamData = {
-                    ...teamForm,
+                    name: teamForm.name,
                     display_order: maxOrder + 1
                 };
-                await createTeam(teamData);
+                const result = await createTeam(teamData);
+                if (!result.success) {
+                    // Revert on failure
+                    setTeams(teams);
+                    alert("Failed to create team");
+                    return;
+                } else {
+                    // Refresh to get the real ID from database
+                    const [, , teamsData] = await Promise.all([
+                        Promise.resolve(people),
+                        Promise.resolve(roles),
+                        getTeams(),
+                    ]);
+                    setTeams(teamsData);
+                }
             }
-            await fetchData();
             resetTeamForm();
             onTeamModalClose();
         } catch (error) {
             console.error("Error saving team:", error);
+            // Revert optimistic update on error
+            if (editingTeam) {
+                setTeams(teams);
+            } else {
+                setTeams(teams);
+            }
         } finally {
             setSaving(false);
         }
