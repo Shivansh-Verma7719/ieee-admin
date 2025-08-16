@@ -7,7 +7,9 @@ import {
     IconPhoto,
     IconCalendarEvent,
     IconHome,
+    IconUsers,
 } from "@tabler/icons-react";
+import { Avatar } from "@heroui/react";
 import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
 import { JwtClaims } from "@/types/supabase";
@@ -66,6 +68,13 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                 ),
             },
             {
+                label: "Team",
+                href: "/team",
+                icon: (
+                    <IconUsers className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
+                ),
+            },
+            {
                 label: "Logout",
                 href: "/logout",
                 icon: (
@@ -76,6 +85,8 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
     };
 
     const links = getLinks();
+
+    // console.log(user)
 
     return (
         <div
@@ -102,9 +113,14 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                                     subtext: user.email || "user@example.com",
                                     href: "#",
                                     icon: (
-                                        <div className="h-8 w-8 shrink-0 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center text-white text-sm font-semibold">
-                                            {(user.email || "U")[0].toUpperCase()}
-                                        </div>
+                                        <Avatar
+                                            src={user.user_metadata?.avatar_url || ""}
+                                            alt={user.user_metadata?.name || "User"}
+                                            className="h-8 w-8 shrink-0 rounded-full"
+                                            imgProps={{
+                                                referrerPolicy: "no-referrer",
+                                            }}
+                                        />
                                     ),
                                 }}
                             />

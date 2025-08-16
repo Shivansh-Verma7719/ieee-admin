@@ -3,7 +3,7 @@ import HomePageWrapper from "@/components/homePageWrapper";
 import { JwtClaims } from "@/types/supabase";
 
 export default async function Home() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const {
     data,
   } = await supabase.auth.getClaims();
