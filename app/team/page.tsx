@@ -26,6 +26,10 @@ import {
     deletePerson,
     createRole,
     createTeam,
+    updateTeam,
+    deleteTeam,
+    updatePersonOrder,
+    updateTeamOrder,
     uploadProfileImage,
     Person,
     Role,
@@ -47,6 +51,7 @@ export default function TeamPage() {
 
     // Form states
     const [editingPerson, setEditingPerson] = useState<Person | null>(null);
+    const [editingTeam, setEditingTeam] = useState<Team | null>(null);
     const [personForm, setPersonForm] = useState({
         full_name: "",
         email: "",
@@ -57,9 +62,10 @@ export default function TeamPage() {
         instagram: "",
         twitter: "",
         can_login: false,
+        display_order: 0,
     });
     const [roleForm, setRoleForm] = useState({ name: "" });
-    const [teamForm, setTeamForm] = useState({ name: "" });
+    const [teamForm, setTeamForm] = useState({ name: "", display_order: 0 });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageInputType, setImageInputType] = useState<"upload" | "url">("url");
 
@@ -124,6 +130,69 @@ export default function TeamPage() {
         await fetchData();
     };
 
+    const handleDeleteTeam = async (teamId: number) => {
+        const result = await deleteTeam(teamId);
+        if (result.success) {
+            await fetchData();
+        } else {
+            alert(result.error || "Failed to delete team");
+        }
+    };
+
+    const handleMoveTeamUp = async (teamId: number) => {
+        const currentTeam = teams.find(t => t.id === teamId);
+        if (!currentTeam) return;
+
+        const sortedTeams = [...teams].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        const currentIndex = sortedTeams.findIndex(t => t.id === teamId);
+
+        if (currentIndex > 0) {
+            const teamAbove = sortedTeams[currentIndex - 1];
+            const updates = [
+                { id: currentTeam.id, display_order: teamAbove.display_order || 0 },
+                { id: teamAbove.id, display_order: currentTeam.display_order || 0 }
+            ];
+
+            const result = await updateTeamOrder(updates);
+            if (result.success) {
+                await fetchData();
+            }
+        }
+    };
+
+    const handleMoveTeamDown = async (teamId: number) => {
+        const currentTeam = teams.find(t => t.id === teamId);
+        if (!currentTeam) return;
+
+        const sortedTeams = [...teams].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        const currentIndex = sortedTeams.findIndex(t => t.id === teamId);
+
+        if (currentIndex < sortedTeams.length - 1) {
+            const teamBelow = sortedTeams[currentIndex + 1];
+            const updates = [
+                { id: currentTeam.id, display_order: teamBelow.display_order || 0 },
+                { id: teamBelow.id, display_order: currentTeam.display_order || 0 }
+            ];
+
+            const result = await updateTeamOrder(updates);
+            if (result.success) {
+                await fetchData();
+            }
+        }
+    };
+
+    const handleReorderMembers = async (teamId: number, newOrder: Person[]) => {
+        const updates = newOrder.map((person, index) => ({
+            id: person.id,
+            display_order: index + 1
+        }));
+
+        const result = await updatePersonOrder(updates);
+        if (result.success) {
+            await fetchData();
+        }
+    };
+
     const handleRoleSubmit = async () => {
         setSaving(true);
         await createRole(roleForm);
@@ -135,11 +204,32 @@ export default function TeamPage() {
 
     const handleTeamSubmit = async () => {
         setSaving(true);
-        await createTeam(teamForm);
-        await fetchData();
-        setTeamForm({ name: "" });
-        onTeamModalClose();
-        setSaving(false);
+        try {
+            if (editingTeam) {
+                // For editing, only update the name, keep the existing display_order
+                await updateTeam(editingTeam.id, { name: teamForm.name });
+            } else {
+                // For new teams, automatically assign the next display_order
+                const maxOrder = Math.max(...teams.map(t => t.display_order || 0), 0);
+                const teamData = {
+                    ...teamForm,
+                    display_order: maxOrder + 1
+                };
+                await createTeam(teamData);
+            }
+            await fetchData();
+            resetTeamForm();
+            onTeamModalClose();
+        } catch (error) {
+            console.error("Error saving team:", error);
+        } finally {
+            setSaving(false);
+        }
+    };
+
+    const resetTeamForm = () => {
+        setTeamForm({ name: "", display_order: 0 });
+        setEditingTeam(null);
     };
 
     const resetPersonForm = () => {
@@ -153,6 +243,7 @@ export default function TeamPage() {
             instagram: "",
             twitter: "",
             can_login: false,
+            display_order: 0,
         });
         setEditingPerson(null);
         setImageFile(null);
@@ -171,6 +262,7 @@ export default function TeamPage() {
             instagram: person.instagram || "",
             twitter: person.twitter || "",
             can_login: person.can_login || false,
+            display_order: person.display_order || 0,
         });
         onPersonModalOpen();
     };
@@ -226,7 +318,10 @@ export default function TeamPage() {
                                 color="secondary"
                                 variant="flat"
                                 startContent={<IconSitemap />}
-                                onPress={onTeamModalOpen}
+                                onPress={() => {
+                                    resetTeamForm();
+                                    onTeamModalOpen();
+                                }}
                             >
                                 Add Team
                             </Button>
@@ -245,20 +340,39 @@ export default function TeamPage() {
                 </motion.div>
 
                 <div className="space-y-12">
-                    {Object.entries(groupedPeople).map(([teamName, teamMembers], index) => (
-                        <div key={teamName}>
-                            <DynamicTeamSection
-                                title={teamName}
-                                members={teamMembers}
-                                canEdit={true}
-                                onEdit={openEditModal}
-                                onDelete={handleDeletePerson}
-                            />
-                            {index < Object.entries(groupedPeople).length - 1 && (
-                                <div className="py-6" />
-                            )}
-                        </div>
-                    ))}
+                    {Object.entries(groupedPeople).map(([teamName, teamMembers], index) => {
+                        const team = teams.find(t => t.name === teamName);
+                        return (
+                            <div key={teamName}>
+                                <DynamicTeamSection
+                                    title={teamName}
+                                    members={teamMembers}
+                                    canEdit={true}
+                                    teamId={team?.id}
+                                    onEdit={openEditModal}
+                                    onDelete={handleDeletePerson}
+                                    onEditTeam={(teamId) => {
+                                        const teamToEdit = teams.find(t => t.id === teamId);
+                                        if (teamToEdit) {
+                                            setEditingTeam(teamToEdit);
+                                            setTeamForm({
+                                                name: teamToEdit.name || "",
+                                                display_order: teamToEdit.display_order || 0
+                                            });
+                                            onTeamModalOpen();
+                                        }
+                                    }}
+                                    onDeleteTeam={handleDeleteTeam}
+                                    onMoveTeamUp={handleMoveTeamUp}
+                                    onMoveTeamDown={handleMoveTeamDown}
+                                    onReorderMembers={handleReorderMembers}
+                                />
+                                {index < Object.entries(groupedPeople).length - 1 && (
+                                    <div className="py-6" />
+                                )}
+                            </div>
+                        );
+                    })}
                 </div>
             </div>
 
@@ -406,9 +520,9 @@ export default function TeamPage() {
             </Modal>
 
             {/* Team Modal */}
-            <Modal isOpen={isTeamModalOpen} onClose={onTeamModalClose}>
+            <Modal isOpen={isTeamModalOpen} onClose={() => { resetTeamForm(); onTeamModalClose(); }}>
                 <ModalContent>
-                    <ModalHeader>Add New Team</ModalHeader>
+                    <ModalHeader>{editingTeam ? "Edit Team" : "Add New Team"}</ModalHeader>
                     <ModalBody>
                         <Input
                             label="Team Name"
@@ -418,11 +532,11 @@ export default function TeamPage() {
                         />
                     </ModalBody>
                     <ModalFooter>
-                        <Button variant="light" onPress={onTeamModalClose}>
+                        <Button variant="light" onPress={() => { resetTeamForm(); onTeamModalClose(); }}>
                             Cancel
                         </Button>
                         <Button color="primary" onPress={handleTeamSubmit} isLoading={saving}>
-                            Create Team
+                            {editingTeam ? "Update" : "Create"} Team
                         </Button>
                     </ModalFooter>
                 </ModalContent>

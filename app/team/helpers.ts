@@ -37,7 +37,7 @@ export async function uploadProfileImage(file: File): Promise<string | null> {
   return publicUrl;
 }
 
-// Fetch all people with their roles and teams
+// Fetch all people with their roles and teams, ordered by team and then by display_order within team
 export async function getPeople(): Promise<Person[]> {
   const supabase = createClient();
 
@@ -51,7 +51,8 @@ export async function getPeople(): Promise<Person[]> {
     `
     )
     .eq("is_active", true)
-    .order("id");
+    .order("team_id", { ascending: true, nullsFirst: false })
+    .order("display_order", { ascending: true });
 
   if (error) {
     console.error("Error fetching people:", error);
@@ -85,6 +86,7 @@ export async function getTeams(): Promise<Team[]> {
   const { data, error } = await supabase
     .from("teams")
     .select("*")
+    .order("display_order", { ascending: true })
     .order("name");
 
   if (error) {
@@ -180,4 +182,113 @@ export async function createTeam(
   }
 
   return { success: true };
+}
+
+// Update team data
+export async function updateTeam(
+  id: number,
+  teamData: TablesUpdate<"teams">
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  const { error } = await supabase.from("teams").update(teamData).eq("id", id);
+
+  if (error) {
+    console.error("Error updating team:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+// Delete team
+export async function deleteTeam(
+  teamId: number
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  // First check if there are any people associated with this team
+  const { data: people, error: checkError } = await supabase
+    .from("people")
+    .select("id")
+    .eq("team_id", teamId)
+    .eq("is_active", true);
+
+  if (checkError) {
+    console.error("Error checking team dependencies:", checkError);
+    return { success: false, error: checkError.message };
+  }
+
+  if (people && people.length > 0) {
+    return {
+      success: false,
+      error:
+        "Cannot delete team with active members. Please remove or reassign members first.",
+    };
+  }
+
+  const { error } = await supabase.from("teams").delete().eq("id", teamId);
+
+  if (error) {
+    console.error("Error deleting team:", error);
+    return { success: false, error: error.message };
+  }
+
+  return { success: true };
+}
+
+// Update person display order within a team
+export async function updatePersonOrder(
+  updates: { id: number; display_order: number }[]
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  try {
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("people")
+        .update({ display_order: update.display_order })
+        .eq("id", update.id);
+
+      if (error) {
+        console.error("Error updating person order:", error);
+        throw error;
+      }
+    }
+
+    return { success: true };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Update team display order
+export async function updateTeamOrder(
+  updates: { id: number; display_order: number }[]
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  try {
+    for (const update of updates) {
+      const { error } = await supabase
+        .from("teams")
+        .update({ display_order: update.display_order })
+        .eq("id", update.id);
+
+      if (error) {
+        console.error("Error updating team order:", error);
+        throw error;
+      }
+    }
+
+    return { success: true };
+  } catch (error: unknown) {
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
 }

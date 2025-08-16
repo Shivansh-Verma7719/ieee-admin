@@ -88,6 +88,7 @@ export type Database = {
         Row: {
           can_login: boolean | null
           created_at: string
+          display_order: number | null
           email: string | null
           full_name: string | null
           id: number
@@ -102,6 +103,7 @@ export type Database = {
         Insert: {
           can_login?: boolean | null
           created_at?: string
+          display_order?: number | null
           email?: string | null
           full_name?: string | null
           id?: number
@@ -116,6 +118,7 @@ export type Database = {
         Update: {
           can_login?: boolean | null
           created_at?: string
+          display_order?: number | null
           email?: string | null
           full_name?: string | null
           id?: number
@@ -219,16 +222,19 @@ export type Database = {
       teams: {
         Row: {
           created_at: string
+          display_order: number | null
           id: number
           name: string | null
         }
         Insert: {
           created_at?: string
+          display_order?: number | null
           id?: number
           name?: string | null
         }
         Update: {
           created_at?: string
+          display_order?: number | null
           id?: number
           name?: string | null
         }
