@@ -1,6 +1,6 @@
 import React from "react";
 import Image from "next/image";
-import { motion, Reorder } from "framer-motion";
+import { motion } from "framer-motion";
 import Link from "next/link";
 import { Mail, Edit, Trash2, ArrowUp, ArrowDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Button } from "@heroui/react";
@@ -63,31 +63,53 @@ export default function DynamicTeamSection({
         !member.role?.name?.toLowerCase().includes("co-director")
     );
 
-    const handleMemberReorder = (newOrder: Person[]) => {
-        if (onReorderMembers && teamId) {
-            onReorderMembers(teamId, newOrder);
-        }
-    };
-
     const moveMemberLeft = (member: Person, membersList: Person[]) => {
         const currentIndex = membersList.findIndex(m => m.id === member.id);
-        if (currentIndex > 0) {
+        if (currentIndex > 0 && onReorderMembers && teamId) {
             const newOrder = [...membersList];
             [newOrder[currentIndex - 1], newOrder[currentIndex]] = [newOrder[currentIndex], newOrder[currentIndex - 1]];
-            handleMemberReorder(newOrder);
+
+            // Reconstruct the full members list with the reordered subset
+            const allMembers = [...members];
+            const isCoDirector = member.role?.name?.toLowerCase().includes("co-director");
+
+            if (isCoDirector) {
+                // Update co-directors section
+                const otherMembers = allMembers.filter(m => !m.role?.name?.toLowerCase().includes("co-director"));
+                const fullNewOrder = [...newOrder, ...otherMembers];
+                onReorderMembers(teamId, fullNewOrder);
+            } else {
+                // Update other members section
+                const coDirectors = allMembers.filter(m => m.role?.name?.toLowerCase().includes("co-director"));
+                const fullNewOrder = [...coDirectors, ...newOrder];
+                onReorderMembers(teamId, fullNewOrder);
+            }
         }
     };
 
     const moveMemberRight = (member: Person, membersList: Person[]) => {
         const currentIndex = membersList.findIndex(m => m.id === member.id);
-        if (currentIndex < membersList.length - 1) {
+        if (currentIndex < membersList.length - 1 && onReorderMembers && teamId) {
             const newOrder = [...membersList];
             [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
-            handleMemberReorder(newOrder);
-        }
-    };
 
-    return (
+            // Reconstruct the full members list with the reordered subset
+            const allMembers = [...members];
+            const isCoDirector = member.role?.name?.toLowerCase().includes("co-director");
+
+            if (isCoDirector) {
+                // Update co-directors section
+                const otherMembers = allMembers.filter(m => !m.role?.name?.toLowerCase().includes("co-director"));
+                const fullNewOrder = [...newOrder, ...otherMembers];
+                onReorderMembers(teamId, fullNewOrder);
+            } else {
+                // Update other members section
+                const coDirectors = allMembers.filter(m => m.role?.name?.toLowerCase().includes("co-director"));
+                const fullNewOrder = [...coDirectors, ...newOrder];
+                onReorderMembers(teamId, fullNewOrder);
+            }
+        }
+    }; return (
         <div className="w-full">
             <div className="relative group">
                 <motion.h2
@@ -160,161 +182,94 @@ export default function DynamicTeamSection({
                         animate="visible"
                         className="w-full"
                     >
-                        {canEdit && onReorderMembers && teamId ? (
-                            <Reorder.Group
-                                axis="x"
-                                values={coDirectors}
-                                onReorder={handleMemberReorder}
-                                className="flex justify-center gap-6 sm:gap-12 flex-wrap"
-                            >
-                                {coDirectors.map((member) => (
-                                    <Reorder.Item
-                                        key={`director-${member.id}`}
-                                        value={member}
-                                        
-                                    >
-                                        <motion.div
-                                            variants={cardVariants}
-                                            whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                                            className="shadow-lg rounded-lg p-6 flex flex-col items-center w-full max-w-sm relative group"
-                                        >
-                                            {canEdit && onEdit && onDelete && (
-                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => onEdit(member)}
-                                                        className="bg-white/80 backdrop-blur-sm"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => onDelete(member.id)}
-                                                        className="bg-white/80 backdrop-blur-sm text-danger"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            )}
-                                            {canEdit && (
-                                                <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => moveMemberLeft(member, coDirectors)}
-                                                        className="bg-white/80 backdrop-blur-sm"
-                                                        isDisabled={coDirectors.findIndex(m => m.id === member.id) === 0}
-                                                    >
-                                                        <ChevronLeft className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => moveMemberRight(member, coDirectors)}
-                                                        className="bg-white/80 backdrop-blur-sm"
-                                                        isDisabled={coDirectors.findIndex(m => m.id === member.id) === coDirectors.length - 1}
-                                                    >
-                                                        <ChevronRight className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            )}
-                                            <div className="relative w-28 h-28 sm:w-40 sm:h-40 border-4 border-[#467eb5] rounded-full overflow-hidden">
-                                                <Image
-                                                    src={member.profile_image || "/images/placeholder.jpg"}
-                                                    alt={`${member.full_name} Image`}
-                                                    fill
-                                                    style={{ objectFit: "cover" }}
-                                                />
-                                            </div>
-                                            <h2 className="font-bold text-xl sm:text-2xl mt-6 text-center">
-                                                {member.full_name}
-                                            </h2>
-                                            <div className="mt-4 text-center">
-                                                <p className="text-sm text-[#c2674b] font-bold">
-                                                    {member.role?.name}
-                                                </p>
-                                                {member.email && (
-                                                    <div className="flex justify-center w-full mt-2">
-                                                        <Link
-                                                            href={`mailto:${member.email}`}
-                                                            className="text-sm text-[#d47557] font-bold text-center"
-                                                        >
-                                                            <Mail />
-                                                        </Link>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </motion.div>
-                                    </Reorder.Item>
-                                ))}
-                            </Reorder.Group>
-                        ) : (
-                            <div className="flex justify-center gap-6 sm:gap-12 flex-wrap">
-                                {coDirectors.map((member) => (
-                                    <motion.div
-                                        key={`director-${member.id}`}
-                                        variants={cardVariants}
-                                        whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                                        className="shadow-lg rounded-lg p-6 flex flex-col items-center w-full max-w-sm relative group"
-                                    >
-                                        {canEdit && onEdit && onDelete && (
-                                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
-                                                <Button
-                                                    size="sm"
-                                                    variant="light"
-                                                    isIconOnly
-                                                    onPress={() => onEdit(member)}
-                                                    className="bg-white/80 backdrop-blur-sm"
+                        <div className="flex justify-center gap-6 sm:gap-12 flex-wrap">
+                            {coDirectors.map((member) => (
+                                <motion.div
+                                    key={`director-${member.id}-${member.display_order}`}
+                                    variants={cardVariants}
+                                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
+                                    animate={{
+                                        scale: 1,
+                                        transition: { duration: 0.2 }
+                                    }}
+                                    layout
+                                    className="shadow-lg rounded-lg p-6 flex flex-col items-center w-full max-w-sm relative group"
+                                >
+                                    {canEdit && onEdit && onDelete && (
+                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => onEdit(member)}
+                                                className="bg-white/80 backdrop-blur-sm"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => onDelete(member.id)}
+                                                className="bg-white/80 backdrop-blur-sm text-danger"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                    {canEdit && (
+                                        <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => moveMemberLeft(member, coDirectors)}
+                                                className="bg-white/80 backdrop-blur-sm"
+                                                isDisabled={coDirectors.findIndex(m => m.id === member.id) === 0}
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => moveMemberRight(member, coDirectors)}
+                                                className="bg-white/80 backdrop-blur-sm"
+                                                isDisabled={coDirectors.findIndex(m => m.id === member.id) === coDirectors.length - 1}
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                    <div className="relative w-28 h-28 sm:w-40 sm:h-40 border-4 border-[#467eb5] rounded-full overflow-hidden">
+                                        <Image
+                                            src={member.profile_image || "/images/placeholder.jpg"}
+                                            alt={`${member.full_name} Image`}
+                                            fill
+                                            style={{ objectFit: "cover" }}
+                                        />
+                                    </div>
+                                    <h2 className="font-bold text-xl sm:text-2xl mt-6 text-center">
+                                        {member.full_name}
+                                    </h2>
+                                    <div className="mt-4 text-center">
+                                        <p className="text-sm text-[#c2674b] font-bold">
+                                            {member.role?.name}
+                                        </p>
+                                        {member.email && (
+                                            <div className="flex justify-center w-full mt-2">
+                                                <Link
+                                                    href={`mailto:${member.email}`}
+                                                    className="text-sm text-[#d47557] font-bold text-center"
                                                 >
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="light"
-                                                    isIconOnly
-                                                    onPress={() => onDelete(member.id)}
-                                                    className="bg-white/80 backdrop-blur-sm text-danger"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                    <Mail />
+                                                </Link>
                                             </div>
                                         )}
-                                        <div className="relative w-28 h-28 sm:w-40 sm:h-40 border-4 border-[#467eb5] rounded-full overflow-hidden">
-                                            <Image
-                                                src={member.profile_image || "/images/placeholder.jpg"}
-                                                alt={`${member.full_name} Image`}
-                                                fill
-                                                style={{ objectFit: "cover" }}
-                                            />
-                                        </div>
-                                        <h2 className="font-bold text-xl sm:text-2xl mt-6 text-center">
-                                            {member.full_name}
-                                        </h2>
-                                        <div className="mt-4 text-center">
-                                            <p className="text-sm text-[#c2674b] font-bold">
-                                                {member.role?.name}
-                                            </p>
-                                            {member.email && (
-                                                <div className="flex justify-center w-full mt-2">
-                                                    <Link
-                                                        href={`mailto:${member.email}`}
-                                                        className="text-sm text-[#d47557] font-bold text-center"
-                                                    >
-                                                        <Mail />
-                                                    </Link>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
                     </motion.div>
                 )}
 
@@ -326,162 +281,94 @@ export default function DynamicTeamSection({
                         animate="visible"
                         className="w-full"
                     >
-                        {canEdit && onReorderMembers && teamId ? (
-                            <Reorder.Group
-                                axis="x"
-                                values={otherMembers}
-                                onReorder={handleMemberReorder}
-                                className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-12"
-                                as="div"
-                            >
-                                {otherMembers.map((member) => (
-                                    <Reorder.Item
-                                        key={`member-${member.id}`}
-                                        value={member}
-                                        as="div"
-                                    >
-                                        <motion.div
-                                            variants={cardVariants}
-                                            whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                                            className="shadow-lg rounded-lg p-6 flex flex-col items-center w-full relative group"
-                                        >
-                                            {canEdit && onEdit && onDelete && (
-                                                <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => onEdit(member)}
-                                                        className="bg-white/80 backdrop-blur-sm"
-                                                    >
-                                                        <Edit className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => onDelete(member.id)}
-                                                        className="bg-white/80 backdrop-blur-sm text-danger"
-                                                    >
-                                                        <Trash2 className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            )}
-                                            {canEdit && (
-                                                <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => moveMemberLeft(member, otherMembers)}
-                                                        className="bg-white/80 backdrop-blur-sm"
-                                                        isDisabled={otherMembers.findIndex(m => m.id === member.id) === 0}
-                                                    >
-                                                        <ChevronLeft className="w-4 h-4" />
-                                                    </Button>
-                                                    <Button
-                                                        size="sm"
-                                                        variant="light"
-                                                        isIconOnly
-                                                        onPress={() => moveMemberRight(member, otherMembers)}
-                                                        className="bg-white/80 backdrop-blur-sm"
-                                                        isDisabled={otherMembers.findIndex(m => m.id === member.id) === otherMembers.length - 1}
-                                                    >
-                                                        <ChevronRight className="w-4 h-4" />
-                                                    </Button>
-                                                </div>
-                                            )}
-                                            <div className="relative w-28 h-28 sm:w-40 sm:h-40 border-4 border-[#467eb5] rounded-full overflow-hidden">
-                                                <Image
-                                                    src={member.profile_image || "/images/placeholder.jpg"}
-                                                    alt={`${member.full_name} Image`}
-                                                    fill
-                                                    style={{ objectFit: "cover" }}
-                                                />
-                                            </div>
-                                            <h2 className="font-bold text-xl sm:text-2xl mt-6 text-center">
-                                                {member.full_name}
-                                            </h2>
-                                            <div className="mt-4 text-center">
-                                                <p className="text-sm text-[#c2674b] font-bold">
-                                                    {member.role?.name}
-                                                </p>
-                                                {member.email && (
-                                                    <div className="flex justify-center w-full mt-2">
-                                                        <Link
-                                                            href={`mailto:${member.email}`}
-                                                            className="text-sm text-[#d47557] font-bold text-center"
-                                                        >
-                                                            <Mail />
-                                                        </Link>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </motion.div>
-                                    </Reorder.Item>
-                                ))}
-                            </Reorder.Group>
-                        ) : (
-                            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-12">
-                                {otherMembers.map((member) => (
-                                    <motion.div
-                                        key={`member-${member.id}`}
-                                        variants={cardVariants}
-                                        whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                                        className="shadow-lg rounded-lg p-6 flex flex-col items-center w-full relative group"
-                                    >
-                                        {canEdit && onEdit && onDelete && (
-                                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1">
-                                                <Button
-                                                    size="sm"
-                                                    variant="light"
-                                                    isIconOnly
-                                                    onPress={() => onEdit(member)}
-                                                    className="bg-white/80 backdrop-blur-sm"
+                        <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-12">
+                            {otherMembers.map((member) => (
+                                <motion.div
+                                    key={`member-${member.id}-${member.display_order}`}
+                                    variants={cardVariants}
+                                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
+                                    animate={{
+                                        scale: 1,
+                                        transition: { duration: 0.2 }
+                                    }}
+                                    layout
+                                    className="shadow-lg rounded-lg p-6 flex flex-col items-center w-full relative group"
+                                >
+                                    {canEdit && onEdit && onDelete && (
+                                        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => onEdit(member)}
+                                                className="bg-white/80 backdrop-blur-sm"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => onDelete(member.id)}
+                                                className="bg-white/80 backdrop-blur-sm text-danger"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                    {canEdit && (
+                                        <div className="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex gap-1 z-10">
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => moveMemberLeft(member, otherMembers)}
+                                                className="bg-white/80 backdrop-blur-sm"
+                                                isDisabled={otherMembers.findIndex(m => m.id === member.id) === 0}
+                                            >
+                                                <ChevronLeft className="w-4 h-4" />
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="light"
+                                                isIconOnly
+                                                onPress={() => moveMemberRight(member, otherMembers)}
+                                                className="bg-white/80 backdrop-blur-sm"
+                                                isDisabled={otherMembers.findIndex(m => m.id === member.id) === otherMembers.length - 1}
+                                            >
+                                                <ChevronRight className="w-4 h-4" />
+                                            </Button>
+                                        </div>
+                                    )}
+                                    <div className="relative w-28 h-28 sm:w-40 sm:h-40 border-4 border-[#467eb5] rounded-full overflow-hidden">
+                                        <Image
+                                            src={member.profile_image || "/images/placeholder.jpg"}
+                                            alt={`${member.full_name} Image`}
+                                            fill
+                                            style={{ objectFit: "cover" }}
+                                        />
+                                    </div>
+                                    <h2 className="font-bold text-xl sm:text-2xl mt-6 text-center">
+                                        {member.full_name}
+                                    </h2>
+                                    <div className="mt-4 text-center">
+                                        <p className="text-sm text-[#c2674b] font-bold">
+                                            {member.role?.name}
+                                        </p>
+                                        {member.email && (
+                                            <div className="flex justify-center w-full mt-2">
+                                                <Link
+                                                    href={`mailto:${member.email}`}
+                                                    className="text-sm text-[#d47557] font-bold text-center"
                                                 >
-                                                    <Edit className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    size="sm"
-                                                    variant="light"
-                                                    isIconOnly
-                                                    onPress={() => onDelete(member.id)}
-                                                    className="bg-white/80 backdrop-blur-sm text-danger"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                    <Mail />
+                                                </Link>
                                             </div>
                                         )}
-                                        <div className="relative w-28 h-28 sm:w-40 sm:h-40 border-4 border-[#467eb5] rounded-full overflow-hidden">
-                                            <Image
-                                                src={member.profile_image || "/images/placeholder.jpg"}
-                                                alt={`${member.full_name} Image`}
-                                                fill
-                                                style={{ objectFit: "cover" }}
-                                            />
-                                        </div>
-                                        <h2 className="font-bold text-xl sm:text-2xl mt-6 text-center">
-                                            {member.full_name}
-                                        </h2>
-                                        <div className="mt-4 text-center">
-                                            <p className="text-sm text-[#c2674b] font-bold">
-                                                {member.role?.name}
-                                            </p>
-                                            {member.email && (
-                                                <div className="flex justify-center w-full mt-2">
-                                                    <Link
-                                                        href={`mailto:${member.email}`}
-                                                        className="text-sm text-[#d47557] font-bold text-center"
-                                                    >
-                                                        <Mail />
-                                                    </Link>
-                                                </div>
-                                            )}
-                                        </div>
-                                    </motion.div>
-                                ))}
-                            </div>
-                        )}
+                                    </div>
+                                </motion.div>
+                            ))}
+                        </div>
                     </motion.div>
                 )}
             </div>

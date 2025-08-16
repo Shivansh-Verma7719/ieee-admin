@@ -418,8 +418,14 @@ export default function TeamPage() {
         onPersonModalOpen();
     };
 
-    const groupedPeople = teams.reduce((acc, team) => {
-        acc[team.name || ""] = people.filter(person => person.team_id === team.id);
+    // Sort teams by display_order before grouping people
+    const sortedTeams = [...teams].sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+
+    const groupedPeople = sortedTeams.reduce((acc, team) => {
+        const teamMembers = people
+            .filter(person => person.team_id === team.id)
+            .sort((a, b) => (a.display_order || 0) - (b.display_order || 0));
+        acc[team.name || ""] = teamMembers;
         return acc;
     }, {} as Record<string, Person[]>);
 
@@ -493,9 +499,14 @@ export default function TeamPage() {
                 <div className="space-y-12">
                     {Object.entries(groupedPeople).map(([teamName, teamMembers], index) => {
                         const team = teams.find(t => t.name === teamName);
+                        // Create a unique key that changes when order changes
+                        const memberIds = teamMembers.map(m => `${m.id}-${m.display_order}`).join(',');
+                        const teamKey = `${teamName}-${team?.display_order}-${memberIds}`;
+
                         return (
-                            <div key={teamName}>
+                            <div key={teamKey}>
                                 <DynamicTeamSection
+                                    key={teamKey}
                                     title={teamName}
                                     members={teamMembers}
                                     canEdit={true}
