@@ -83,10 +83,3 @@ export async function updatePhoto(
 
   return { success: true };
 }
-
-export async function deleteImage(path: string): Promise<boolean> {
-  const supabase = createClient();
-  const fileName = path.split("/photos/").pop() || "";
-  const { error } = await supabase.storage.from("photos").remove([fileName]);
-  return error ? false : true;
-}

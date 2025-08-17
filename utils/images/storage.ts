@@ -21,8 +21,8 @@ function extractFilePathFromUrl(url: string): string | null {
   }
 }
 
-// Helper to delete profile image from storage
-export async function deleteProfileImage(imageUrl: string, bucket: string): Promise<boolean> {
+// Helper to delete image from storage
+export async function deleteImage(imageUrl: string, bucket: string): Promise<boolean> {
   const supabase = createClient();
 
   try {

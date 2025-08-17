@@ -4,7 +4,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Image as ImageIcon, X, ShieldAlert } from "lucide-react";
 import { Input, Button, Card, CardHeader, CardBody, Spinner } from "@heroui/react";
-import { uploadImage, updatePhoto, getPhoto, deleteImage } from "./helpers";
+import { uploadImage, updatePhoto, getPhoto } from "./helpers";
+import { deleteImage } from "@/utils/images/storage";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
@@ -87,7 +88,7 @@ export default function EditPhotoPage(props: { params: Promise<{ id: string }> }
         }
         if (photo.image_url) {
           //   console.log("photo.image_url", photo.image_url);
-          const deleted = await deleteImage(photo.image_url);
+          const deleted = await deleteImage(photo.image_url, "photos");
           if (!deleted) {
             throw new Error("Failed to delete old image");
           }
@@ -245,7 +246,7 @@ export default function EditPhotoPage(props: { params: Promise<{ id: string }> }
           <Button
             color="primary"
             isDisabled={isSubmitting || !photo.caption}
-            
+
             onClick={handleSubmit}
           >
             {isSubmitting ? "Updating..." : "Update Photo"}

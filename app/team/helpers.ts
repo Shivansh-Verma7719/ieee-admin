@@ -1,7 +1,7 @@
 import { createClient } from "@/utils/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
 import { compressImage, CompressionResult } from "@/utils/images/compression";
-import { deleteProfileImage } from "@/utils/images/storage";
+import { deleteImage } from "@/utils/images/storage";
 
 export type Person = Tables<"people"> & {
   role?: Tables<"roles">;
@@ -172,7 +172,7 @@ export async function deletePerson(
     if (person.profile_image) {
       // Check if the image URL is from our profile_images bucket
       if (person.profile_image.includes("/profile_images/")) {
-        const deleteSuccess = await deleteProfileImage(
+        const deleteSuccess = await deleteImage(
           person.profile_image,
           "profile_images"
         );
