@@ -15,6 +15,8 @@ import {
     Spinner,
     RadioGroup,
     Radio,
+    Alert,
+    Image,
 } from "@heroui/react";
 import DynamicTeamSection from "@/components/DynamicTeamSection";
 import {
@@ -34,8 +36,15 @@ import {
     Person,
     Role,
     Team,
+    uploadResponse
 } from "./helpers";
 import { IconSitemap, IconUserPlus, IconUsersPlus } from "@tabler/icons-react";
+
+interface successAlert {
+    show: boolean;
+    message: string;
+    compressionInfo?: uploadResponse["compressionInfo"];
+}
 
 export default function TeamPage() {
     const [people, setPeople] = useState<Person[]>([]);
@@ -68,10 +77,25 @@ export default function TeamPage() {
     const [teamForm, setTeamForm] = useState({ name: "", display_order: 0 });
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imageInputType, setImageInputType] = useState<"upload" | "url">("url");
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [successAlert, setSuccessAlert] = useState<successAlert>({
+        show: false,
+        message: "",
+        compressionInfo: undefined,
+    });
 
     useEffect(() => {
         fetchData();
     }, []);
+
+    // Cleanup image preview URL when component unmounts or imagePreview changes
+    useEffect(() => {
+        return () => {
+            if (imagePreview) {
+                URL.revokeObjectURL(imagePreview);
+            }
+        };
+    }, [imagePreview]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -90,12 +114,23 @@ export default function TeamPage() {
         setSaving(true);
         try {
             let profileImageUrl = personForm.profile_image;
+            let uploadResult: uploadResponse | null = null; // Declare uploadResult in broader scope
 
             // Only upload file if user selected upload option and provided a file
             if (imageInputType === "upload" && imageFile) {
-                const uploadedUrl = await uploadProfileImage(imageFile);
-                if (uploadedUrl) {
-                    profileImageUrl = uploadedUrl;
+                uploadResult = await uploadProfileImage(imageFile);
+                if (uploadResult.url) {
+                    profileImageUrl = uploadResult.url;
+
+                    setSuccessAlert({
+                        show: true,
+                        message: "Image uploaded successfully!",
+                        compressionInfo: uploadResult.compressionInfo
+                    });
+                    // Auto-hide alert after 10 seconds
+                    setTimeout(() => {
+                        setSuccessAlert({ show: false, message: "" });
+                    }, 20000);
                 }
             }
             // If user selected URL option, use the URL from the form
@@ -125,6 +160,7 @@ export default function TeamPage() {
 
                 // Update database in background
                 const result = await updatePerson(editingPerson.id, personData);
+
                 if (!result.success) {
                     // Revert on failure
                     setPeople(people);
@@ -175,12 +211,20 @@ export default function TeamPage() {
     };
 
     const handleDeletePerson = async (id: number) => {
+        // Find the person object from the current state
+        const personToDelete = people.find(person => person.id === id);
+
+        if (!personToDelete) {
+            alert("Person not found");
+            return;
+        }
+
         // Optimistic update - remove from local state immediately
         const updatedPeople = people.filter(person => person.id !== id);
         setPeople(updatedPeople);
 
         // Update database in background
-        const result = await deletePerson(id);
+        const result = await deletePerson(personToDelete);
         if (!result.success) {
             // Revert on failure
             setPeople(people);
@@ -398,6 +442,7 @@ export default function TeamPage() {
         });
         setEditingPerson(null);
         setImageFile(null);
+        setImagePreview(null);
         setImageInputType("url");
     };
 
@@ -415,6 +460,10 @@ export default function TeamPage() {
             can_login: person.can_login || false,
             display_order: person.display_order || 0,
         });
+        // Clear file inputs when editing existing person
+        setImageFile(null);
+        setImagePreview(null);
+        setImageInputType("url");
         onPersonModalOpen();
     };
 
@@ -446,6 +495,35 @@ export default function TeamPage() {
     return (
         <div className="min-h-screen overflow-y-auto">
             <div className="py-14 px-6 sm:p-20">
+                {/* Success Alert */}
+                {successAlert.show && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -50 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -50 }}
+                        className="mb-6"
+                    >
+                        <Alert
+                            color="success"
+                            title="Upload Successful!"
+                            description={
+                                <div>
+                                    <p>{successAlert.message}</p>
+                                    {successAlert.compressionInfo && (
+                                        <div className="mt-2 text-sm">
+                                            <p><strong>Compression Details:</strong></p>
+                                            <p>Original: {successAlert.compressionInfo.originalSize} ({successAlert.compressionInfo.originalFormat})</p>
+                                            <p>Compressed: {successAlert.compressionInfo.compressedSize} ({successAlert.compressionInfo.finalFormat})</p>
+                                            <p>Space Saved: {successAlert.compressionInfo.compressionRatio}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            }
+                            onClose={() => setSuccessAlert({ show: false, message: "" })}
+                        />
+                    </motion.div>
+                )}
+
                 <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -618,6 +696,10 @@ export default function TeamPage() {
                                             // Clear the profile_image field when switching to upload mode
                                             if (value === "upload") {
                                                 setPersonForm({ ...personForm, profile_image: "" });
+                                                setImagePreview(null);
+                                            } else {
+                                                setImageFile(null);
+                                                setImagePreview(null);
                                             }
                                         }}
                                     >
@@ -626,22 +708,51 @@ export default function TeamPage() {
                                     </RadioGroup>
 
                                     {imageInputType === "url" ? (
-                                        <Input
-                                            label="Profile Image URL"
-                                            placeholder="Enter image URL"
-                                            value={personForm.profile_image || ""}
-                                            onChange={(e) => setPersonForm({ ...personForm, profile_image: e.target.value })}
-                                        />
+                                        <div className="space-y-4">
+                                            <Input
+                                                label="Profile Image URL"
+                                                placeholder="Enter image URL"
+                                                value={personForm.profile_image || ""}
+                                                onChange={(e) => setPersonForm({ ...personForm, profile_image: e.target.value })}
+                                            />
+                                            {personForm.profile_image && (
+                                                <div className="flex justify-center">
+                                                    <Image
+                                                        src={personForm.profile_image}
+                                                        alt="Preview"
+                                                        className="max-w-32 max-h-32 object-cover rounded-lg"
+                                                        fallbackSrc="/images/logo.png"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     ) : (
-                                        <Input
-                                            type="file"
-                                            label="Profile Image File"
-                                            accept="image/*"
-                                            onChange={(e) => {
-                                                const file = e.target.files?.[0];
-                                                if (file) setImageFile(file);
-                                            }}
-                                        />
+                                        <div className="space-y-4">
+                                            <Input
+                                                type="file"
+                                                label="Profile Image File"
+                                                accept="image/*"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        setImageFile(file);
+                                                        // Create preview URL
+                                                        const previewUrl = URL.createObjectURL(file);
+                                                        setImagePreview(previewUrl);
+                                                    }
+                                                }}
+                                            />
+                                            {imagePreview && (
+                                                <div className="flex justify-center">
+                                                    <Image
+                                                        src={imagePreview}
+                                                        alt="Preview"
+                                                        className="max-w-32 max-h-32 object-cover rounded-lg"
+                                                        fallbackSrc="/images/logo.png"
+                                                    />
+                                                </div>
+                                            )}
+                                        </div>
                                     )}
                                 </div>
                             </div>

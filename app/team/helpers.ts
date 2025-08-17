@@ -1,5 +1,7 @@
 import { createClient } from "@/utils/supabase/client";
 import { Tables, TablesInsert, TablesUpdate } from "@/types/database.types";
+import { compressImage, CompressionResult } from "@/utils/images/compression";
+import { deleteProfileImage } from "@/utils/images/storage";
 
 export type Person = Tables<"people"> & {
   role?: Tables<"roles">;
@@ -12,29 +14,55 @@ export type Team = Tables<"teams">;
 export type PersonInsert = TablesInsert<"people">;
 export type PersonUpdate = TablesUpdate<"people">;
 
+export interface uploadResponse {
+  url: string | null;
+  compressionInfo?: CompressionResult["compressionInfo"];
+}
+
 // Helper to upload profile images
-export async function uploadProfileImage(file: File): Promise<string | null> {
+export async function uploadProfileImage(file: File): Promise<uploadResponse> {
   const supabase = createClient();
 
-  // Generate a unique file name
-  const fileName = `profile-${Date.now()}-${file.name}`;
+  try {
+    // Compress the image file and convert to WebP
+    const compressionResult = await compressImage(file, {
+      maxSizeMB: 0.5, // 500KB max for profile images
+      maxWidthOrHeight: 600, // 600px max dimension for profile images
+      quality: 0.85, // Good quality for profile images
+    });
 
-  // Upload the file to Supabase Storage
-  const { data, error } = await supabase.storage
-    .from("profile_images")
-    .upload(fileName, file);
+    // Generate a unique file name with WebP extension
+    const fileExtension = ".webp";
+    const fileName = `profile-${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(7)}${fileExtension}`;
 
-  if (error) {
-    console.error("Error uploading profile image:", error);
-    return null;
+    // Upload the compressed file to Supabase Storage
+    const { data, error } = await supabase.storage
+      .from("profile_images")
+      .upload(fileName, compressionResult.file, {
+        contentType: "image/webp",
+        upsert: false,
+      });
+
+    if (error) {
+      console.error("Error uploading profile image:", error);
+      return { url: null };
+    }
+
+    // Get the public URL for the uploaded image
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from("profile_images").getPublicUrl(data.path);
+
+    return {
+      url: publicUrl,
+      compressionInfo: compressionResult.compressionInfo,
+    };
+  } catch (error) {
+    console.error("Error processing profile image:", error);
+    return { url: null };
   }
-
-  // Get the public URL for the uploaded image
-  const {
-    data: { publicUrl },
-  } = supabase.storage.from("profile_images").getPublicUrl(data.path);
-
-  return publicUrl;
 }
 
 // Fetch all people with their roles and teams, ordered by team and then by display_order within team
@@ -135,21 +163,46 @@ export async function updatePerson(
 
 // Delete a person (set inactive)
 export async function deletePerson(
-  id: number
+  person: Person
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient();
 
-  const { error } = await supabase
-    .from("people")
-    .update({ is_active: false })
-    .eq("id", id);
+  try {
+    // If the person has a profile image, try to delete it from storage
+    if (person.profile_image) {
+      // Check if the image URL is from our profile_images bucket
+      if (person.profile_image.includes("/profile_images/")) {
+        const deleteSuccess = await deleteProfileImage(
+          person.profile_image,
+          "profile_images"
+        );
+        if (!deleteSuccess) {
+          console.warn(
+            "Failed to delete profile image, but continuing with person deletion"
+          );
+        }
+      }
+    }
 
-  if (error) {
-    console.error("Error deleting person:", error);
-    return { success: false, error: error.message };
+    // Set the person as inactive
+    const { error } = await supabase
+      .from("people")
+      .update({ is_active: false })
+      .eq("id", person.id);
+
+    if (error) {
+      console.error("Error deleting person:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in deletePerson:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
   }
-
-  return { success: true };
 }
 
 // Create a new role
