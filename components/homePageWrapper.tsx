@@ -1,18 +1,17 @@
 "use client";
-import { JwtClaims } from "@/types/supabase";
+import KPICard from "./KPICard"; import { JwtClaims } from "@/types/supabase";
 import {
   Button,
   Card,
   CardBody,
   CardHeader,
   Chip,
-  Progress,
   Skeleton
 } from "@heroui/react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { IconCamera, IconCalendar,IconUsers, IconQuestionMark } from "@tabler/icons-react";
+import { IconCamera, IconCalendar, IconUsers, IconQuestionMark } from "@tabler/icons-react";
 
 interface DashboardStats {
   totalEvents: number;
@@ -171,134 +170,75 @@ export default function HomePageWrapper({ user }: { user: JwtClaims | null }) {
 
         {/* KPI Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {/* Events Card */}
-          <Card className="border-none shadow-lg">
-            <CardHeader className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Events</h3>
-                <div className="flex items-center gap-2 mt-2">
-                  {loading ? (
-                    <Skeleton className="h-8 w-16 rounded" />
-                  ) : (
-                    <span className="text-3xl font-bold text-primary">{stats?.totalEvents}</span>
-                  )}
-                  <Chip color="primary" variant="flat" size="sm">Total</Chip>
-                </div>
-              </div>
-              <div className="text-4xl"><IconCalendar /></div>
-            </CardHeader>
-            <CardBody>
-              {loading ? (
-                <Skeleton className="h-4 w-full rounded" />
-              ) : (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Upcoming</span>
-                  <Chip color="success" variant="flat" size="sm">{stats?.upcomingEvents}</Chip>
-                </div>
-              )}
-            </CardBody>
-          </Card>
+          <KPICard
+            title="Events"
+            value={stats?.totalEvents || 0}
+            label="Total"
+            icon={<IconCalendar />}
+            color="primary"
+            loading={loading}
+            bottomContent={{
+              type: "chip",
+              label: "Upcoming",
+              chip: {
+                label: stats?.upcomingEvents || 0,
+                color: "success"
+              }
+            }}
+          />
 
-          {/* Team Members Card */}
-          <Card className="border-none shadow-lg">
-            <CardHeader className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Team</h3>
-                <div className="flex items-center gap-2 mt-2">
-                  {loading ? (
-                    <Skeleton className="h-8 w-16 rounded" />
-                  ) : (
-                    <span className="text-3xl font-bold text-success">{stats?.totalTeamMembers}</span>
-                  )}
-                  <Chip color="success" variant="flat" size="sm">Members</Chip>
-                </div>
-              </div>
-              <div className="text-4xl"><IconUsers /></div>
-            </CardHeader>
-            <CardBody>
-              {loading ? (
-                <Skeleton className="h-6 w-full rounded" />
-              ) : (
-                <div>
-                  <div className="flex justify-between items-center mb-1">
-                    <span className="text-sm text-gray-600 dark:text-gray-400">Active</span>
-                    <span className="text-sm font-medium">{stats?.activeTeamMembers}/{stats?.totalTeamMembers}</span>
-                  </div>
-                  <Progress
-                    value={stats?.totalTeamMembers ? (stats.activeTeamMembers / stats.totalTeamMembers) * 100 : 0}
-                    color="success"
-                    size="sm"
-                  />
-                </div>
-              )}
-            </CardBody>
-          </Card>
+          <KPICard
+            title="Team"
+            value={stats?.totalTeamMembers || 0}
+            label="Members"
+            icon={<IconUsers />}
+            color="success"
+            loading={loading}
+            bottomContent={{
+              type: "progress",
+              label: "Active",
+              progress: {
+                current: stats?.activeTeamMembers || 0,
+                total: stats?.totalTeamMembers || 0,
+                showFraction: true
+              }
+            }}
+          />
 
-          {/* Photos Card */}
-          <Card className="border-none shadow-lg">
-            <CardHeader className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Photos</h3>
-                <div className="flex items-center gap-2 mt-2">
-                  {loading ? (
-                    <Skeleton className="h-8 w-16 rounded" />
-                  ) : (
-                    <span className="text-3xl font-bold text-warning">{stats?.totalPhotos}</span>
-                  )}
-                  <Chip color="warning" variant="flat" size="sm">Total</Chip>
-                </div>
-              </div>
-              <div className="text-4xl"><IconCamera /></div>
-            </CardHeader>
-            <CardBody>
-              <div className="flex justify-between items-center">
-                <span className="text-sm text-gray-600 dark:text-gray-400">Gallery items</span>
-                <Button
-                  as={Link}
-                  href="/photos/create"
-                  color="warning"
-                  variant="light"
-                  size="sm"
-                >
-                  Add Photo
-                </Button>
-              </div>
-            </CardBody>
-          </Card>
+          <KPICard
+            title="Photos"
+            value={stats?.totalPhotos || 0}
+            label="Total"
+            icon={<IconCamera />}
+            color="warning"
+            loading={loading}
+            bottomContent={{
+              type: "button",
+              label: "Gallery items",
+              button: {
+                label: "Add Photo",
+                href: "/photos/create",
+                variant: "light"
+              }
+            }}
+          />
 
-          {/* Queries Card */}
-          <Card className="border-none shadow-lg">
-            <CardHeader className="flex justify-between items-start">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300">Queries</h3>
-                <div className="flex items-center gap-2 mt-2">
-                  {loading ? (
-                    <Skeleton className="h-8 w-16 rounded" />
-                  ) : (
-                    <span className="text-3xl font-bold text-danger">{stats?.totalQueries}</span>
-                  )}
-                  <Chip color="danger" variant="flat" size="sm">Total</Chip>
-                </div>
-              </div>
-              <div className="text-4xl"><IconQuestionMark /></div>
-            </CardHeader>
-            <CardBody>
-              {loading ? (
-                <Skeleton className="h-4 w-full rounded" />
-              ) : (
-                <div className="flex justify-between items-center">
-                  <span className="text-sm text-gray-600 dark:text-gray-400">Pending</span>
-                  <Chip
-                    color={stats?.pendingQueries && stats.pendingQueries > 0 ? "danger" : "success"}
-                    variant="flat"
-                    size="sm"
-                  >
-                    {stats?.pendingQueries}
-                  </Chip>
-                </div>
-              )}
-            </CardBody>
-          </Card>
+          <KPICard
+            title="Queries"
+            value={stats?.totalQueries || 0}
+            label="Total"
+            icon={<IconQuestionMark />}
+            color="danger"
+            loading={loading}
+            bottomContent={{
+              type: "chip",
+              label: "Pending",
+              chip: {
+                label: stats?.pendingQueries || 0,
+                color: stats?.pendingQueries && stats.pendingQueries > 0 ? "danger" : "success"
+              }
+            }}
+          />
         </div>
 
         {/* Additional Info Cards */}
