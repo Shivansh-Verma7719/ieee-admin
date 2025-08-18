@@ -79,7 +79,7 @@ export default function HomePageWrapper({ user }: { user: JwtClaims | null }) {
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
-        <Card className="w-full mx-4">
+        <Card className="max-w-7xl mx-4">
           <CardHeader className="text-center">
             <h1 className="text-3xl font-bold text-primary">IEEE Admin</h1>
           </CardHeader>

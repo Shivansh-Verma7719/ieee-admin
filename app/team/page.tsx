@@ -13,10 +13,9 @@ import {
     Select,
     SelectItem,
     Spinner,
-    RadioGroup,
-    Radio,
     Alert,
     Image,
+    Form,
 } from "@heroui/react";
 import DynamicTeamSection from "@/components/DynamicTeamSection";
 import {
@@ -76,7 +75,6 @@ export default function TeamPage() {
     const [roleForm, setRoleForm] = useState({ name: "" });
     const [teamForm, setTeamForm] = useState({ name: "", display_order: 0 });
     const [imageFile, setImageFile] = useState<File | null>(null);
-    const [imageInputType, setImageInputType] = useState<"upload" | "url">("url");
     const [imagePreview, setImagePreview] = useState<string | null>(null);
     const [successAlert, setSuccessAlert] = useState<successAlert>({
         show: false,
@@ -110,14 +108,34 @@ export default function TeamPage() {
         setLoading(false);
     };
 
-    const handlePersonSubmit = async () => {
+    const handlePersonSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        const formData = new FormData(e.currentTarget as HTMLFormElement);
+        const data = Object.fromEntries(formData);
+
+        // Update form state with form data
+        const updatedPersonForm = {
+            full_name: (data.full_name as string) || "",
+            email: (data.email as string) || "",
+            role_id: (data.role_id as string) || "",
+            team_id: (data.team_id as string) || "",
+            profile_image: personForm.profile_image,
+            linkedin: (data.linkedin as string) || "",
+            instagram: (data.instagram as string) || "",
+            twitter: (data.twitter as string) || "",
+            can_login: false,
+            display_order: 0,
+        };
+
+        setPersonForm(updatedPersonForm);
+
         setSaving(true);
         try {
-            let profileImageUrl = personForm.profile_image;
-            let uploadResult: uploadResponse | null = null; // Declare uploadResult in broader scope
+            let profileImageUrl = "";
+            let uploadResult: uploadResponse | null = null;
 
-            // Only upload file if user selected upload option and provided a file
-            if (imageInputType === "upload" && imageFile) {
+            // Upload file if provided
+            if (imageFile) {
                 uploadResult = await uploadProfileImage(imageFile);
                 if (uploadResult.url) {
                     profileImageUrl = uploadResult.url;
@@ -133,14 +151,12 @@ export default function TeamPage() {
                     }, 20000);
                 }
             }
-            // If user selected URL option, use the URL from the form
-            // (profileImageUrl is already set from personForm.profile_image)
 
             const personData = {
-                ...personForm,
+                ...updatedPersonForm,
                 profile_image: profileImageUrl,
-                role_id: personForm.role_id ? parseInt(personForm.role_id) : null,
-                team_id: personForm.team_id ? parseInt(personForm.team_id) : null,
+                role_id: updatedPersonForm.role_id ? parseInt(updatedPersonForm.role_id) : null,
+                team_id: updatedPersonForm.team_id ? parseInt(updatedPersonForm.team_id) : null,
                 is_active: true,
             };
 
@@ -443,7 +459,6 @@ export default function TeamPage() {
         setEditingPerson(null);
         setImageFile(null);
         setImagePreview(null);
-        setImageInputType("url");
     };
 
     const openEditModal = (person: Person) => {
@@ -463,7 +478,6 @@ export default function TeamPage() {
         // Clear file inputs when editing existing person
         setImageFile(null);
         setImagePreview(null);
-        setImageInputType("url");
         onPersonModalOpen();
     };
 
@@ -622,116 +636,89 @@ export default function TeamPage() {
                     <ModalHeader>
                         {editingPerson ? "Edit Member" : "Add New Member"}
                     </ModalHeader>
-                    <ModalBody>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <Input
-                                label="Full Name"
-                                placeholder="Enter full name"
-                                value={personForm.full_name || ""}
-                                onChange={(e) => setPersonForm({ ...personForm, full_name: e.target.value })}
-                            />
-                            <Input
-                                label="Email"
-                                placeholder="Enter email"
-                                type="email"
-                                value={personForm.email || ""}
-                                onChange={(e) => setPersonForm({ ...personForm, email: e.target.value })}
-                            />
-                            <Select
-                                label="Role"
-                                placeholder="Select a role"
-                                selectedKeys={personForm.role_id ? [personForm.role_id] : []}
-                                onSelectionChange={(keys) => {
-                                    const selectedKey = Array.from(keys)[0] as string;
-                                    setPersonForm({ ...personForm, role_id: selectedKey || "" });
-                                }}
-                            >
-                                {roles.map((role) => (
-                                    <SelectItem key={role.id.toString()}>
-                                        {role.name}
-                                    </SelectItem>
-                                ))}
-                            </Select>
-                            <Select
-                                label="Team"
-                                placeholder="Select a team"
-                                selectedKeys={personForm.team_id ? [personForm.team_id] : []}
-                                onSelectionChange={(keys) => {
-                                    const selectedKey = Array.from(keys)[0] as string;
-                                    setPersonForm({ ...personForm, team_id: selectedKey || "" });
-                                }}
-                            >
-                                {teams.map((team) => (
-                                    <SelectItem key={team.id.toString()}>
-                                        {team.name}
-                                    </SelectItem>
-                                ))}
-                            </Select>
-                            <Input
-                                label="LinkedIn"
-                                placeholder="LinkedIn profile URL"
-                                value={personForm.linkedin || ""}
-                                onChange={(e) => setPersonForm({ ...personForm, linkedin: e.target.value })}
-                            />
-                            <Input
-                                label="Instagram"
-                                placeholder="Instagram handle"
-                                value={personForm.instagram || ""}
-                                onChange={(e) => setPersonForm({ ...personForm, instagram: e.target.value })}
-                            />
-                            <Input
-                                label="Twitter"
-                                placeholder="Twitter handle"
-                                value={personForm.twitter || ""}
-                                onChange={(e) => setPersonForm({ ...personForm, twitter: e.target.value })}
-                            />
-                            <div className="col-span-full">
-                                <div className="space-y-4">
-                                    <RadioGroup
-                                        label="Profile Image"
-                                        orientation="horizontal"
-                                        value={imageInputType}
-                                        onValueChange={(value) => {
-                                            setImageInputType(value as "upload" | "url");
-                                            // Clear the profile_image field when switching to upload mode
-                                            if (value === "upload") {
-                                                setPersonForm({ ...personForm, profile_image: "" });
-                                                setImagePreview(null);
-                                            } else {
-                                                setImageFile(null);
-                                                setImagePreview(null);
-                                            }
-                                        }}
-                                    >
-                                        <Radio value="url">Image URL</Radio>
-                                        <Radio value="upload">Upload File</Radio>
-                                    </RadioGroup>
-
-                                    {imageInputType === "url" ? (
-                                        <div className="space-y-4">
-                                            <Input
-                                                label="Profile Image URL"
-                                                placeholder="Enter image URL"
-                                                value={personForm.profile_image || ""}
-                                                onChange={(e) => setPersonForm({ ...personForm, profile_image: e.target.value })}
-                                            />
-                                            {personForm.profile_image && (
-                                                <div className="flex justify-center">
-                                                    <Image
-                                                        src={personForm.profile_image}
-                                                        alt="Preview"
-                                                        className="max-w-32 max-h-32 object-cover rounded-lg"
-                                                        fallbackSrc="/images/logo.png"
-                                                    />
-                                                </div>
-                                            )}
-                                        </div>
-                                    ) : (
+                    <Form onSubmit={handlePersonSubmit}>
+                        <ModalBody className="w-full">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                                <Input
+                                    label="Full Name"
+                                    placeholder="Enter full name"
+                                    name="full_name"
+                                    isRequired
+                                    value={personForm.full_name || ""}
+                                    onChange={(e) => setPersonForm({ ...personForm, full_name: e.target.value })}
+                                />
+                                <Input
+                                    label="Email"
+                                    placeholder="Enter email"
+                                    name="email"
+                                    type="email"
+                                    isRequired
+                                    value={personForm.email || ""}
+                                    onChange={(e) => setPersonForm({ ...personForm, email: e.target.value })}
+                                />
+                                <Select
+                                    label="Role"
+                                    name="role_id"
+                                    isRequired
+                                    placeholder="Select a role"
+                                    selectedKeys={personForm.role_id ? [personForm.role_id] : []}
+                                    onSelectionChange={(keys) => {
+                                        const selectedKey = Array.from(keys)[0] as string;
+                                        setPersonForm({ ...personForm, role_id: selectedKey || "" });
+                                    }}
+                                >
+                                    {roles.map((role) => (
+                                        <SelectItem key={role.id.toString()}>
+                                            {role.name}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                                <Select
+                                    label="Team"
+                                    name="team_id"
+                                    isRequired
+                                    placeholder="Select a team"
+                                    selectedKeys={personForm.team_id ? [personForm.team_id] : []}
+                                    onSelectionChange={(keys) => {
+                                        const selectedKey = Array.from(keys)[0] as string;
+                                        setPersonForm({ ...personForm, team_id: selectedKey || "" });
+                                    }}
+                                >
+                                    {teams.map((team) => (
+                                        <SelectItem key={team.id.toString()}>
+                                            {team.name}
+                                        </SelectItem>
+                                    ))}
+                                </Select>
+                                <Input
+                                    label="LinkedIn"
+                                    placeholder="LinkedIn profile URL"
+                                    name="linkedin"
+                                    value={personForm.linkedin || ""}
+                                    onChange={(e) => setPersonForm({ ...personForm, linkedin: e.target.value })}
+                                />
+                                <Input
+                                    label="Instagram"
+                                    placeholder="Instagram handle"
+                                    name="instagram"
+                                    value={personForm.instagram || ""}
+                                    onChange={(e) => setPersonForm({ ...personForm, instagram: e.target.value })}
+                                />
+                                <Input
+                                    label="Twitter"
+                                    placeholder="Twitter handle"
+                                    name="twitter"
+                                    value={personForm.twitter || ""}
+                                    onChange={(e) => setPersonForm({ ...personForm, twitter: e.target.value })}
+                                />
+                                <div className="col-span-full">
+                                    <div className="space-y-4">
                                         <div className="space-y-4">
                                             <Input
                                                 type="file"
-                                                label="Profile Image File"
+                                                label="Profile Image File*"
                                                 accept="image/*"
+                                                isRequired={!editingPerson?.profile_image}
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0];
                                                     if (file) {
@@ -742,30 +729,59 @@ export default function TeamPage() {
                                                     }
                                                 }}
                                             />
+                                            {/* Hidden input to handle file validation in form */}
+                                            <input
+                                                type="hidden"
+                                                name="image_file_validation"
+                                                value={imageFile || editingPerson?.profile_image ? "valid" : ""}
+                                                required
+                                            />
+                                            {/* Show current image if editing and no new preview */}
+                                            {editingPerson?.profile_image && !imagePreview && (
+                                                <div className="space-y-2">
+                                                    <p className="text-sm text-gray-600">Current Image:</p>
+                                                    <div className="flex justify-center">
+                                                        <Image
+                                                            src={editingPerson.profile_image}
+                                                            alt="Current"
+                                                            className="max-w-32 max-h-32 object-cover rounded-lg"
+                                                            fallbackSrc="/images/logo.png"
+                                                        />
+                                                    </div>
+                                                </div>
+                                            )}
+                                            {/* Show new image preview */}
                                             {imagePreview && (
-                                                <div className="flex justify-center">
-                                                    <Image
-                                                        src={imagePreview}
-                                                        alt="Preview"
-                                                        className="max-w-32 max-h-32 object-cover rounded-lg"
-                                                        fallbackSrc="/images/logo.png"
-                                                    />
+                                                <div className="space-y-2">
+                                                    <p className="text-sm text-gray-600">New Image Preview:</p>
+                                                    <div className="flex justify-center">
+                                                        <Image
+                                                            src={imagePreview}
+                                                            alt="Preview"
+                                                            className="max-w-32 max-h-32 object-cover rounded-lg"
+                                                            fallbackSrc="/images/logo.png"
+                                                        />
+                                                    </div>
                                                 </div>
                                             )}
                                         </div>
-                                    )}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="light" onPress={onPersonModalClose}>
-                            Cancel
-                        </Button>
-                        <Button color="primary" onPress={handlePersonSubmit} isLoading={saving}>
-                            {editingPerson ? "Update" : "Create"}
-                        </Button>
-                    </ModalFooter>
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button variant="light" onPress={onPersonModalClose}>
+                                Cancel
+                            </Button>
+                            <Button
+                                color="primary"
+                                type="submit"
+                                isLoading={saving}
+                            >
+                                {editingPerson ? "Update" : "Create"}
+                            </Button>
+                        </ModalFooter>
+                    </Form>
                 </ModalContent>
             </Modal>
 
