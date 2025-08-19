@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, act } from "react";
 import { motion } from "framer-motion";
 import {
     Button,
@@ -98,7 +98,7 @@ export default function TeamPage() {
     const fetchData = async () => {
         setLoading(true);
         const [peopleData, rolesData, teamsData] = await Promise.all([
-            getPeople(),
+            getPeople(true),
             getRoles(),
             getTeams(),
         ]);

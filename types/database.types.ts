@@ -147,6 +147,82 @@ export type Database = {
           },
         ]
       }
+      people_permissions: {
+        Row: {
+          created_at: string
+          expires_at: string | null
+          granted_at: string | null
+          granted_by: number | null
+          id: number
+          notes: string | null
+          permission_id: string | null
+          person_id: number | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: number | null
+          id?: number
+          notes?: string | null
+          permission_id?: string | null
+          person_id?: number | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          granted_by?: number | null
+          id?: number
+          notes?: string | null
+          permission_id?: string | null
+          person_id?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "people_permissions_granted_by_fkey"
+            columns: ["granted_by"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_permissions_permission_id_fkey"
+            columns: ["permission_id"]
+            isOneToOne: false
+            referencedRelation: "permissions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "people_permissions_person_id_fkey"
+            columns: ["person_id"]
+            isOneToOne: false
+            referencedRelation: "people"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      permissions: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          key: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          key?: string | null
+        }
+        Relationships: []
+      }
       photos: {
         Row: {
           caption: string | null

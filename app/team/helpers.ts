@@ -66,9 +66,10 @@ export async function uploadProfileImage(file: File): Promise<uploadResponse> {
 }
 
 // Fetch all people with their roles and teams, ordered by team and then by display_order within team
-export async function getPeople(): Promise<Person[]> {
+export async function getPeople(active_only?: boolean): Promise<Person[]> {
   const supabase = createClient();
 
+  // If active_only is true, filter for active people otherwise don't
   const { data, error } = await supabase
     .from("people")
     .select(
@@ -78,7 +79,6 @@ export async function getPeople(): Promise<Person[]> {
       team:teams(*)
     `
     )
-    .eq("is_active", true)
     .order("team_id", { ascending: true, nullsFirst: false })
     .order("display_order", { ascending: true });
 
@@ -87,7 +87,11 @@ export async function getPeople(): Promise<Person[]> {
     return [];
   }
 
-  return data || [];
+  if (active_only) {
+    return data.filter((person) => person.is_active);
+  }
+
+  return data;
 }
 
 // Fetch all roles
@@ -188,6 +192,50 @@ export async function deletePerson(
     const { error } = await supabase
       .from("people")
       .update({ is_active: false })
+      .eq("id", person.id);
+
+    if (error) {
+      console.error("Error deleting person:", error);
+      return { success: false, error: error.message };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Error in deletePerson:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Unknown error",
+    };
+  }
+}
+
+// Delete a person from table
+export async function deletePersonFromTable(
+  person: Person
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = createClient();
+
+  try {
+    // If the person has a profile image, try to delete it from storage
+    if (person.profile_image) {
+      // Check if the image URL is from our profile_images bucket
+      if (person.profile_image.includes("/profile_images/")) {
+        const deleteSuccess = await deleteImage(
+          person.profile_image,
+          "profile_images"
+        );
+        if (!deleteSuccess) {
+          console.warn(
+            "Failed to delete profile image, but continuing with person deletion"
+          );
+        }
+      }
+    }
+
+    // Set the person as inactive
+    const { error } = await supabase
+      .from("people")
+      .delete()
       .eq("id", person.id);
 
     if (error) {

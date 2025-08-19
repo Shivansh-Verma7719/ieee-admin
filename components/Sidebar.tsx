@@ -9,6 +9,7 @@ import {
     IconHome,
     IconUsers,
     IconFolderQuestion,
+    IconUserCog,
 } from "@tabler/icons-react";
 import { Avatar } from "@heroui/react";
 import { motion } from "motion/react";
@@ -69,10 +70,17 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                 ),
             },
             {
-                label: "Team",
+                label: "Team Previewīī",
                 href: "/team",
                 icon: (
                     <IconUsers className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
+                ),
+            },
+            {
+                label: "Manage Team",
+                href: "/manage-team",
+                icon: (
+                    <IconUserCog className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
             },
             {

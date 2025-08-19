@@ -109,7 +109,8 @@ export default function HomePageWrapper({ user }: { user: JwtClaims | null }) {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-            Hello, {user?.user_metadata?.full_name}! 👋
+            {/* First name only */}
+            Hello, {user?.user_metadata?.full_name?.split(" ")[0]}! 👋
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
             Welcome to your IEEE Admin Dashboard
