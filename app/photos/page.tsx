@@ -63,7 +63,7 @@ export default function PhotosPage() {
     return (
       <Modal isOpen={isOpen} onOpenChange={onClose}>
         <ModalContent>
-          {(onClose) => (
+          {() => (
             <>
               <ModalHeader className="flex flex-col gap-1">
                 Delete Photo
