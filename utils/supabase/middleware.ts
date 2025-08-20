@@ -45,24 +45,15 @@ export async function updateSession(request: NextRequest) {
     "/photos/edit/",
   ];
 
-  const prohibitedPages = ["/login"];
-
-  if (user && prohibitedPages.includes(request.nextUrl.pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/";
-    return NextResponse.redirect(url);
-  }
-
   if (
     !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
     !request.nextUrl.pathname.startsWith("/auth") &&
     !request.nextUrl.pathname.startsWith("/logout") &&
     !request.nextUrl.pathname.startsWith("/auth-error") &&
     protectedPages.includes(request.nextUrl.pathname)
   ) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/";
     return NextResponse.redirect(url);
   }
 

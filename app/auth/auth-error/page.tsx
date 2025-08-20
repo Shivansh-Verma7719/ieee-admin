@@ -13,7 +13,7 @@ export default async function AuthError() {
         </p>
         <div className="flex flex-col items-center justify-center mt-8">
           <Link
-            href="/login"
+            href="/"
             className="px-4 py-2 border border-transparent text-base font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
           >
             If you are an IEEE member, try logging in again

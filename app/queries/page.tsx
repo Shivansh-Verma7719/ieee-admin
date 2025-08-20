@@ -10,7 +10,7 @@ export default async function QueriesPage() {
     } = await supabase.auth.getUser();
 
     if (!user) {
-        redirect("/login");
+        redirect("/");
     }
 
     // Fetch all queries

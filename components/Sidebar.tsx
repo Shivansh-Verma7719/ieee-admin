@@ -3,7 +3,6 @@ import React, { useState } from "react";
 import { Sidebar, SidebarBody, SidebarLink } from "./ui/sidebar";
 import {
     IconArrowLeft,
-    IconUserBolt,
     IconPhoto,
     IconCalendarEvent,
     IconHome,
@@ -37,13 +36,6 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                     href: "/",
                     icon: (
                         <IconHome className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
-                    ),
-                },
-                {
-                    label: "Login",
-                    href: "/login",
-                    icon: (
-                        <IconUserBolt className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                     ),
                 },
             ];

@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import KPICard from "./KPICard"; import { JwtClaims } from "@/types/supabase";
 import {
   Button,
@@ -12,6 +13,8 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { IconCamera, IconCalendar, IconUsers, IconQuestionMark } from "@tabler/icons-react";
+import Google from "@/public/images/google.png";
+
 
 interface DashboardStats {
   totalEvents: number;
@@ -76,6 +79,17 @@ export default function HomePageWrapper({ user }: { user: JwtClaims | null }) {
     }
   };
 
+  const handleLogin = async () => {
+    const nextUrl = "/";
+    const supabase = createClient();
+    await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${location.origin}/auth/callback?next=${nextUrl}`,
+      },
+    });
+  };
+
   if (!user) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen">
@@ -88,11 +102,13 @@ export default function HomePageWrapper({ user }: { user: JwtClaims | null }) {
               Please log in to access the admin dashboard
             </p>
             <Button
-              as={Link}
-              href="/login"
               color="primary"
               variant="solid"
               size="lg"
+              onPress={handleLogin}
+              startContent={
+                <Image src={Google} alt="Google" width={20} height={20} />
+              }
               className="w-full"
             >
               Login
