@@ -5,6 +5,7 @@ import getEvents, { Event } from "@/app/events";
 import { useState, useEffect } from "react";
 import { Plus } from "lucide-react";
 import { Button, Link, Skeleton } from "@heroui/react";
+import { RequirePermission, PERMISSIONS } from "@/lib/permissions";
 
 const EventsPage = () => {
   const [events, setEvents] = useState<Event[]>([]);
@@ -41,6 +42,31 @@ const EventsPage = () => {
 
   if (loading) {
     return (
+      <RequirePermission permission={PERMISSIONS.EVENTS}>
+        <div className="container mx-auto px-8 sm:px-20 lg:px-28 py-12">
+          <div className="space-y-8 sm:space-y-10">
+            <div className="flex justify-between items-center mb-6 sm:mb-8 pt-12 sm:pt-20">
+              <h1 className="text-3xl sm:text-4xl font-bold">Our Events</h1>
+              <Button
+                as={Link}
+                href="/events/create"
+                color="primary"
+                startContent={<Plus />}
+              >
+                Add New Event
+              </Button>
+            </div>
+            {[...Array(5)].map((_, index) => (
+              <EventSkeleton key={`upcoming-${index}`} />
+            ))}
+          </div>
+        </div>
+      </RequirePermission>
+    );
+  }
+
+  return (
+    <RequirePermission permission={PERMISSIONS.EVENTS}>
       <div className="container mx-auto px-8 sm:px-20 lg:px-28 py-12">
         <div className="space-y-8 sm:space-y-10">
           <div className="flex justify-between items-center mb-6 sm:mb-8 pt-12 sm:pt-20">
@@ -54,31 +80,10 @@ const EventsPage = () => {
               Add New Event
             </Button>
           </div>
-          {[...Array(5)].map((_, index) => (
-            <EventSkeleton key={`upcoming-${index}`} />
-          ))}
+          <ExpandableCardDemo cards={events} />
         </div>
       </div>
-    );
-  }
-
-  return (
-    <div className="container mx-auto px-8 sm:px-20 lg:px-28 py-12">
-      <div className="space-y-8 sm:space-y-10">
-        <div className="flex justify-between items-center mb-6 sm:mb-8 pt-12 sm:pt-20">
-          <h1 className="text-3xl sm:text-4xl font-bold">Our Events</h1>
-          <Button
-            as={Link}
-            href="/events/create"
-            color="primary"
-            startContent={<Plus />}
-          >
-            Add New Event
-          </Button>
-        </div>
-        <ExpandableCardDemo cards={events} />
-      </div>
-    </div>
+    </RequirePermission>
   );
 };
 

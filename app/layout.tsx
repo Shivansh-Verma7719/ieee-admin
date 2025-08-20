@@ -3,6 +3,7 @@ import "./globals.css";
 import { SidebarDemo } from "@/components/Sidebar";
 import { createClient } from "@/utils/supabase/server";
 import { JwtClaims } from "@/types/supabase";
+import { PermissionsProvider } from "@/lib/permissions";
 
 export const metadata: Metadata = {
   title: "IEEE Admin",
@@ -27,9 +28,11 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="bg-background text-foreground antialiased">
-        <SidebarDemo user={user}>
-          {children}
-        </SidebarDemo>
+        <PermissionsProvider>
+          <SidebarDemo user={user}>
+            {children}
+          </SidebarDemo>
+        </PermissionsProvider>
       </body>
     </html>
   );

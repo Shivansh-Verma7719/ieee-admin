@@ -14,6 +14,7 @@ import {
   Button,
 } from "@heroui/react";
 import { getPhotos, deletePhoto } from "./helpers";
+import { RequirePermission, PERMISSIONS } from "@/lib/permissions";
 
 interface Photo {
   id: number;
@@ -83,67 +84,69 @@ export default function PhotosPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-24">
-      <div className="flex justify-between items-center mb-8">
-        <h1 className="text-4xl font-bold">Photo Gallery</h1>
-        <Button
-          as={Link}
-          href="/photos/create"
-          color="primary"
-          startContent={<Plus />}
-        >
-          Add New Photo
-        </Button>
-      </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {photos.map((photo) => (
-          <motion.div
-            key={photo.id}
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.3 }}
-            className="relative aspect-square overflow-hidden rounded-lg shadow-lg group"
+    <RequirePermission permission={PERMISSIONS.PHOTOS}>
+      <div className="container mx-auto px-4 py-24">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-4xl font-bold">Photo Gallery</h1>
+          <Button
+            as={Link}
+            href="/photos/create"
+            color="primary"
+            startContent={<Plus />}
           >
-            <Image
-              src={photo.image_url}
-              alt={photo.caption}
-              layout="fill"
-              objectFit="cover"
-              className="transition-all duration-300 group-hover:scale-110 group-hover:brightness-50"
-            />
-            <div className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <p className="text-white text-lg font-semibold">
-                {photo.caption}
-              </p>
-            </div>
-            <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-              <Button
-                as={Link}
-                href={`/photos/edit/${photo.id}`}
-                size="sm"
-                color="primary"
-                isIconOnly
-              >
-                <Pencil size={16} />
-              </Button>
-              <Button
-                size="sm"
-                color="danger"
-                isIconOnly
-                onClick={() => handleDelete(photo.id)}
-              >
-                <Trash2 size={16} />
-              </Button>
-            </div>
-          </motion.div>
-        ))}
+            Add New Photo
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {photos.map((photo) => (
+            <motion.div
+              key={photo.id}
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="relative aspect-square overflow-hidden rounded-lg shadow-lg group"
+            >
+              <Image
+                src={photo.image_url}
+                alt={photo.caption}
+                layout="fill"
+                objectFit="cover"
+                className="transition-all duration-300 group-hover:scale-110 group-hover:brightness-50"
+              />
+              <div className="absolute inset-0 flex items-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <p className="text-white text-lg font-semibold">
+                  {photo.caption}
+                </p>
+              </div>
+              <div className="absolute top-2 right-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <Button
+                  as={Link}
+                  href={`/photos/edit/${photo.id}`}
+                  size="sm"
+                  color="primary"
+                  isIconOnly
+                >
+                  <Pencil size={16} />
+                </Button>
+                <Button
+                  size="sm"
+                  color="danger"
+                  isIconOnly
+                  onClick={() => handleDelete(photo.id)}
+                >
+                  <Trash2 size={16} />
+                </Button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+        <DeleteModal
+          isOpen={isOpen}
+          onClose={onOpenChange}
+          id={selectedPhotoId || 0}
+          onDeleteSuccess={fetchPhotos}
+        />
       </div>
-      <DeleteModal
-        isOpen={isOpen}
-        onClose={onOpenChange}
-        id={selectedPhotoId || 0}
-        onDeleteSuccess={fetchPhotos}
-      />
-    </div>
+    </RequirePermission>
   );
 }

@@ -18,6 +18,7 @@ import { JwtClaims } from "@/types/supabase";
 import Image from "next/image";
 import Link from "next/link";
 import IEEELogo from "@/public/images/logo.png";
+import { usePermissions, PERMISSIONS } from "@/lib/permissions";
 
 interface SidebarDemoProps {
     user: JwtClaims | null;
@@ -26,6 +27,7 @@ interface SidebarDemoProps {
 
 export function SidebarDemo({ user, children }: SidebarDemoProps) {
     const [open, setOpen] = useState(false);
+    const { hasPermission } = usePermissions();
 
     const getLinks = () => {
         if (!user) {
@@ -47,13 +49,14 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
             ];
         }
 
-        return [
+        const allLinks = [
             {
                 label: "Home",
                 href: "/",
                 icon: (
                     <IconHome className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
+                show: true, // Dashboard is always visible
             },
             {
                 label: "Events",
@@ -61,6 +64,7 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                 icon: (
                     <IconCalendarEvent className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
+                show: hasPermission(PERMISSIONS.EVENTS),
             },
             {
                 label: "Photos",
@@ -68,13 +72,15 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                 icon: (
                     <IconPhoto className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
+                show: hasPermission(PERMISSIONS.PHOTOS),
             },
             {
-                label: "Team Previewīī",
+                label: "Team Preview",
                 href: "/team",
                 icon: (
                     <IconUsers className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
+                show: hasPermission(PERMISSIONS.TEAM),
             },
             {
                 label: "Manage Team",
@@ -82,6 +88,7 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                 icon: (
                     <IconUserCog className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
+                show: hasPermission(PERMISSIONS.TEAM),
             },
             {
                 label: "Queries",
@@ -89,6 +96,7 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                 icon: (
                     <IconFolderQuestion className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
+                show: hasPermission(PERMISSIONS.QUERIES),
             },
             {
                 label: "Logout",
@@ -96,8 +104,12 @@ export function SidebarDemo({ user, children }: SidebarDemoProps) {
                 icon: (
                     <IconArrowLeft className="h-7 w-7 shrink-0 text-neutral-700 dark:text-neutral-200" />
                 ),
+                show: true, // Logout is always visible
             },
         ];
+
+        // Filter links based on permissions
+        return allLinks.filter(link => link.show).map(({ ...linkWithoutShow }) => linkWithoutShow);
     };
 
     const links = getLinks();

@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, act } from "react";
+import React, { useState, useEffect, } from "react";
 import { motion } from "framer-motion";
 import {
     Button,
@@ -38,6 +38,7 @@ import {
     uploadResponse
 } from "./helpers";
 import { IconSitemap, IconUserPlus, IconUsersPlus } from "@tabler/icons-react";
+import { RequirePermission, PERMISSIONS } from "@/lib/permissions";
 
 interface successAlert {
     show: boolean;
@@ -51,6 +52,8 @@ export default function TeamPage() {
     const [teams, setTeams] = useState<Team[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+
+
 
     // Modal controls
     const { isOpen: isPersonModalOpen, onOpen: onPersonModalOpen, onClose: onPersonModalClose } = useDisclosure();
@@ -507,329 +510,331 @@ export default function TeamPage() {
     }
 
     return (
-        <div className="min-h-screen overflow-y-auto">
-            <div className="py-14 px-6 sm:p-20">
-                {/* Success Alert */}
-                {successAlert.show && (
+        <RequirePermission permission={PERMISSIONS.TEAM}>
+            <div className="min-h-screen overflow-y-auto">
+                <div className="py-14 px-6 sm:p-20">
+                    {/* Success Alert */}
+                    {successAlert.show && (
+                        <motion.div
+                            initial={{ opacity: 0, y: -50 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -50 }}
+                            className="mb-6"
+                        >
+                            <Alert
+                                color="success"
+                                title="Upload Successful!"
+                                description={
+                                    <div>
+                                        <p>{successAlert.message}</p>
+                                        {successAlert.compressionInfo && (
+                                            <div className="mt-2 text-sm">
+                                                <p><strong>Compression Details:</strong></p>
+                                                <p>Original: {successAlert.compressionInfo.originalSize} ({successAlert.compressionInfo.originalFormat})</p>
+                                                <p>Compressed: {successAlert.compressionInfo.compressedSize} ({successAlert.compressionInfo.finalFormat})</p>
+                                                <p>Space Saved: {successAlert.compressionInfo.compressionRatio}</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                }
+                                onClose={() => setSuccessAlert({ show: false, message: "" })}
+                            />
+                        </motion.div>
+                    )}
+
                     <motion.div
-                        initial={{ opacity: 0, y: -50 }}
+                        initial={{ opacity: 0, y: -20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -50 }}
-                        className="mb-6"
+                        transition={{ duration: 0.75 }}
+                        className="mb-8"
                     >
-                        <Alert
-                            color="success"
-                            title="Upload Successful!"
-                            description={
-                                <div>
-                                    <p>{successAlert.message}</p>
-                                    {successAlert.compressionInfo && (
-                                        <div className="mt-2 text-sm">
-                                            <p><strong>Compression Details:</strong></p>
-                                            <p>Original: {successAlert.compressionInfo.originalSize} ({successAlert.compressionInfo.originalFormat})</p>
-                                            <p>Compressed: {successAlert.compressionInfo.compressedSize} ({successAlert.compressionInfo.finalFormat})</p>
-                                            <p>Space Saved: {successAlert.compressionInfo.compressionRatio}</p>
-                                        </div>
+                        <div className="flex justify-between items-center mb-6">
+                            <h1 className="text-center text-6xl pb-4 font-bold relative">
+                                Meet the Team
+                                <motion.div
+                                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#467eb5]"
+                                    initial={{ scaleX: 0, opacity: 0 }}
+                                    animate={{ scaleX: 1, opacity: 1 }}
+                                    transition={{ duration: 0.75, delay: 0.3 }}
+                                />
+                            </h1>
+                            <div className="flex gap-2">
+                                <Button
+                                    color="secondary"
+                                    variant="flat"
+                                    startContent={<IconUserPlus />}
+                                    onPress={onRoleModalOpen}
+                                >
+                                    Add Role
+                                </Button>
+                                <Button
+                                    color="secondary"
+                                    variant="flat"
+                                    startContent={<IconSitemap />}
+                                    onPress={() => {
+                                        resetTeamForm();
+                                        onTeamModalOpen();
+                                    }}
+                                >
+                                    Add Team
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    startContent={<IconUsersPlus />}
+                                    onPress={() => {
+                                        resetPersonForm();
+                                        onPersonModalOpen();
+                                    }}
+                                >
+                                    Add Member
+                                </Button>
+                            </div>
+                        </div>
+                    </motion.div>
+
+                    <div className="space-y-12">
+                        {Object.entries(groupedPeople).map(([teamName, teamMembers], index) => {
+                            const team = teams.find(t => t.name === teamName);
+                            // Create a unique key that changes when order changes
+                            const memberIds = teamMembers.map(m => `${m.id}-${m.display_order}`).join(',');
+                            const teamKey = `${teamName}-${team?.display_order}-${memberIds}`;
+
+                            return (
+                                <div key={teamKey}>
+                                    <DynamicTeamSection
+                                        key={teamKey}
+                                        title={teamName}
+                                        members={teamMembers}
+                                        canEdit={true}
+                                        teamId={team?.id}
+                                        onEdit={openEditModal}
+                                        onDelete={handleDeletePerson}
+                                        onEditTeam={(teamId) => {
+                                            const teamToEdit = teams.find(t => t.id === teamId);
+                                            if (teamToEdit) {
+                                                setEditingTeam(teamToEdit);
+                                                setTeamForm({
+                                                    name: teamToEdit.name || "",
+                                                    display_order: teamToEdit.display_order || 0
+                                                });
+                                                onTeamModalOpen();
+                                            }
+                                        }}
+                                        onDeleteTeam={handleDeleteTeam}
+                                        onMoveTeamUp={handleMoveTeamUp}
+                                        onMoveTeamDown={handleMoveTeamDown}
+                                        onReorderMembers={handleReorderMembers}
+                                    />
+                                    {index < Object.entries(groupedPeople).length - 1 && (
+                                        <div className="py-6" />
                                     )}
                                 </div>
-                            }
-                            onClose={() => setSuccessAlert({ show: false, message: "" })}
-                        />
-                    </motion.div>
-                )}
-
-                <motion.div
-                    initial={{ opacity: 0, y: -20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.75 }}
-                    className="mb-8"
-                >
-                    <div className="flex justify-between items-center mb-6">
-                        <h1 className="text-center text-6xl pb-4 font-bold relative">
-                            Meet the Team
-                            <motion.div
-                                className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#467eb5]"
-                                initial={{ scaleX: 0, opacity: 0 }}
-                                animate={{ scaleX: 1, opacity: 1 }}
-                                transition={{ duration: 0.75, delay: 0.3 }}
-                            />
-                        </h1>
-                        <div className="flex gap-2">
-                            <Button
-                                color="secondary"
-                                variant="flat"
-                                startContent={<IconUserPlus />}
-                                onPress={onRoleModalOpen}
-                            >
-                                Add Role
-                            </Button>
-                            <Button
-                                color="secondary"
-                                variant="flat"
-                                startContent={<IconSitemap />}
-                                onPress={() => {
-                                    resetTeamForm();
-                                    onTeamModalOpen();
-                                }}
-                            >
-                                Add Team
-                            </Button>
-                            <Button
-                                color="primary"
-                                startContent={<IconUsersPlus />}
-                                onPress={() => {
-                                    resetPersonForm();
-                                    onPersonModalOpen();
-                                }}
-                            >
-                                Add Member
-                            </Button>
-                        </div>
+                            );
+                        })}
                     </div>
-                </motion.div>
-
-                <div className="space-y-12">
-                    {Object.entries(groupedPeople).map(([teamName, teamMembers], index) => {
-                        const team = teams.find(t => t.name === teamName);
-                        // Create a unique key that changes when order changes
-                        const memberIds = teamMembers.map(m => `${m.id}-${m.display_order}`).join(',');
-                        const teamKey = `${teamName}-${team?.display_order}-${memberIds}`;
-
-                        return (
-                            <div key={teamKey}>
-                                <DynamicTeamSection
-                                    key={teamKey}
-                                    title={teamName}
-                                    members={teamMembers}
-                                    canEdit={true}
-                                    teamId={team?.id}
-                                    onEdit={openEditModal}
-                                    onDelete={handleDeletePerson}
-                                    onEditTeam={(teamId) => {
-                                        const teamToEdit = teams.find(t => t.id === teamId);
-                                        if (teamToEdit) {
-                                            setEditingTeam(teamToEdit);
-                                            setTeamForm({
-                                                name: teamToEdit.name || "",
-                                                display_order: teamToEdit.display_order || 0
-                                            });
-                                            onTeamModalOpen();
-                                        }
-                                    }}
-                                    onDeleteTeam={handleDeleteTeam}
-                                    onMoveTeamUp={handleMoveTeamUp}
-                                    onMoveTeamDown={handleMoveTeamDown}
-                                    onReorderMembers={handleReorderMembers}
-                                />
-                                {index < Object.entries(groupedPeople).length - 1 && (
-                                    <div className="py-6" />
-                                )}
-                            </div>
-                        );
-                    })}
                 </div>
-            </div>
 
-            {/* Person Modal */}
-            <Modal isOpen={isPersonModalOpen} onClose={onPersonModalClose} size="2xl">
-                <ModalContent>
-                    <ModalHeader>
-                        {editingPerson ? "Edit Member" : "Add New Member"}
-                    </ModalHeader>
-                    <Form onSubmit={handlePersonSubmit}>
-                        <ModalBody className="w-full">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
-                                <Input
-                                    label="Full Name"
-                                    placeholder="Enter full name"
-                                    name="full_name"
-                                    isRequired
-                                    value={personForm.full_name || ""}
-                                    onChange={(e) => setPersonForm({ ...personForm, full_name: e.target.value })}
-                                />
-                                <Input
-                                    label="Email"
-                                    placeholder="Enter email"
-                                    name="email"
-                                    type="email"
-                                    isRequired
-                                    value={personForm.email || ""}
-                                    onChange={(e) => setPersonForm({ ...personForm, email: e.target.value })}
-                                />
-                                <Select
-                                    label="Role"
-                                    name="role_id"
-                                    isRequired
-                                    placeholder="Select a role"
-                                    selectedKeys={personForm.role_id ? [personForm.role_id] : []}
-                                    onSelectionChange={(keys) => {
-                                        const selectedKey = Array.from(keys)[0] as string;
-                                        setPersonForm({ ...personForm, role_id: selectedKey || "" });
-                                    }}
-                                >
-                                    {roles.map((role) => (
-                                        <SelectItem key={role.id.toString()}>
-                                            {role.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
-                                <Select
-                                    label="Team"
-                                    name="team_id"
-                                    isRequired
-                                    placeholder="Select a team"
-                                    selectedKeys={personForm.team_id ? [personForm.team_id] : []}
-                                    onSelectionChange={(keys) => {
-                                        const selectedKey = Array.from(keys)[0] as string;
-                                        setPersonForm({ ...personForm, team_id: selectedKey || "" });
-                                    }}
-                                >
-                                    {teams.map((team) => (
-                                        <SelectItem key={team.id.toString()}>
-                                            {team.name}
-                                        </SelectItem>
-                                    ))}
-                                </Select>
-                                <Input
-                                    label="LinkedIn"
-                                    placeholder="LinkedIn profile URL"
-                                    name="linkedin"
-                                    value={personForm.linkedin || ""}
-                                    onChange={(e) => setPersonForm({ ...personForm, linkedin: e.target.value })}
-                                />
-                                <Input
-                                    label="Instagram"
-                                    placeholder="Instagram handle"
-                                    name="instagram"
-                                    value={personForm.instagram || ""}
-                                    onChange={(e) => setPersonForm({ ...personForm, instagram: e.target.value })}
-                                />
-                                <Input
-                                    label="Twitter"
-                                    placeholder="Twitter handle"
-                                    name="twitter"
-                                    value={personForm.twitter || ""}
-                                    onChange={(e) => setPersonForm({ ...personForm, twitter: e.target.value })}
-                                />
-                                <div className="col-span-full">
-                                    <div className="space-y-4">
+                {/* Person Modal */}
+                <Modal isOpen={isPersonModalOpen} onClose={onPersonModalClose} size="2xl">
+                    <ModalContent>
+                        <ModalHeader>
+                            {editingPerson ? "Edit Member" : "Add New Member"}
+                        </ModalHeader>
+                        <Form onSubmit={handlePersonSubmit}>
+                            <ModalBody className="w-full">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full">
+                                    <Input
+                                        label="Full Name"
+                                        placeholder="Enter full name"
+                                        name="full_name"
+                                        isRequired
+                                        value={personForm.full_name || ""}
+                                        onChange={(e) => setPersonForm({ ...personForm, full_name: e.target.value })}
+                                    />
+                                    <Input
+                                        label="Email"
+                                        placeholder="Enter email"
+                                        name="email"
+                                        type="email"
+                                        isRequired
+                                        value={personForm.email || ""}
+                                        onChange={(e) => setPersonForm({ ...personForm, email: e.target.value })}
+                                    />
+                                    <Select
+                                        label="Role"
+                                        name="role_id"
+                                        isRequired
+                                        placeholder="Select a role"
+                                        selectedKeys={personForm.role_id ? [personForm.role_id] : []}
+                                        onSelectionChange={(keys) => {
+                                            const selectedKey = Array.from(keys)[0] as string;
+                                            setPersonForm({ ...personForm, role_id: selectedKey || "" });
+                                        }}
+                                    >
+                                        {roles.map((role) => (
+                                            <SelectItem key={role.id.toString()}>
+                                                {role.name}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+                                    <Select
+                                        label="Team"
+                                        name="team_id"
+                                        isRequired
+                                        placeholder="Select a team"
+                                        selectedKeys={personForm.team_id ? [personForm.team_id] : []}
+                                        onSelectionChange={(keys) => {
+                                            const selectedKey = Array.from(keys)[0] as string;
+                                            setPersonForm({ ...personForm, team_id: selectedKey || "" });
+                                        }}
+                                    >
+                                        {teams.map((team) => (
+                                            <SelectItem key={team.id.toString()}>
+                                                {team.name}
+                                            </SelectItem>
+                                        ))}
+                                    </Select>
+                                    <Input
+                                        label="LinkedIn"
+                                        placeholder="LinkedIn profile URL"
+                                        name="linkedin"
+                                        value={personForm.linkedin || ""}
+                                        onChange={(e) => setPersonForm({ ...personForm, linkedin: e.target.value })}
+                                    />
+                                    <Input
+                                        label="Instagram"
+                                        placeholder="Instagram handle"
+                                        name="instagram"
+                                        value={personForm.instagram || ""}
+                                        onChange={(e) => setPersonForm({ ...personForm, instagram: e.target.value })}
+                                    />
+                                    <Input
+                                        label="Twitter"
+                                        placeholder="Twitter handle"
+                                        name="twitter"
+                                        value={personForm.twitter || ""}
+                                        onChange={(e) => setPersonForm({ ...personForm, twitter: e.target.value })}
+                                    />
+                                    <div className="col-span-full">
                                         <div className="space-y-4">
-                                            <Input
-                                                type="file"
-                                                label="Profile Image File*"
-                                                accept="image/*"
-                                                isRequired={!editingPerson?.profile_image}
-                                                onChange={(e) => {
-                                                    const file = e.target.files?.[0];
-                                                    if (file) {
-                                                        setImageFile(file);
-                                                        // Create preview URL
-                                                        const previewUrl = URL.createObjectURL(file);
-                                                        setImagePreview(previewUrl);
-                                                    }
-                                                }}
-                                            />
-                                            {/* Hidden input to handle file validation in form */}
-                                            <input
-                                                type="hidden"
-                                                name="image_file_validation"
-                                                value={imageFile || editingPerson?.profile_image ? "valid" : ""}
-                                                required
-                                            />
-                                            {/* Show current image if editing and no new preview */}
-                                            {editingPerson?.profile_image && !imagePreview && (
-                                                <div className="space-y-2">
-                                                    <p className="text-sm text-gray-600">Current Image:</p>
-                                                    <div className="flex justify-center">
-                                                        <Image
-                                                            src={editingPerson.profile_image}
-                                                            alt="Current"
-                                                            className="max-w-32 max-h-32 object-cover rounded-lg"
-                                                            fallbackSrc="/images/logo.png"
-                                                        />
+                                            <div className="space-y-4">
+                                                <Input
+                                                    type="file"
+                                                    label="Profile Image File*"
+                                                    accept="image/*"
+                                                    isRequired={!editingPerson?.profile_image}
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            setImageFile(file);
+                                                            // Create preview URL
+                                                            const previewUrl = URL.createObjectURL(file);
+                                                            setImagePreview(previewUrl);
+                                                        }
+                                                    }}
+                                                />
+                                                {/* Hidden input to handle file validation in form */}
+                                                <input
+                                                    type="hidden"
+                                                    name="image_file_validation"
+                                                    value={imageFile || editingPerson?.profile_image ? "valid" : ""}
+                                                    required
+                                                />
+                                                {/* Show current image if editing and no new preview */}
+                                                {editingPerson?.profile_image && !imagePreview && (
+                                                    <div className="space-y-2">
+                                                        <p className="text-sm text-gray-600">Current Image:</p>
+                                                        <div className="flex justify-center">
+                                                            <Image
+                                                                src={editingPerson.profile_image}
+                                                                alt="Current"
+                                                                className="max-w-32 max-h-32 object-cover rounded-lg"
+                                                                fallbackSrc="/images/logo.png"
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
-                                            {/* Show new image preview */}
-                                            {imagePreview && (
-                                                <div className="space-y-2">
-                                                    <p className="text-sm text-gray-600">New Image Preview:</p>
-                                                    <div className="flex justify-center">
-                                                        <Image
-                                                            src={imagePreview}
-                                                            alt="Preview"
-                                                            className="max-w-32 max-h-32 object-cover rounded-lg"
-                                                            fallbackSrc="/images/logo.png"
-                                                        />
+                                                )}
+                                                {/* Show new image preview */}
+                                                {imagePreview && (
+                                                    <div className="space-y-2">
+                                                        <p className="text-sm text-gray-600">New Image Preview:</p>
+                                                        <div className="flex justify-center">
+                                                            <Image
+                                                                src={imagePreview}
+                                                                alt="Preview"
+                                                                className="max-w-32 max-h-32 object-cover rounded-lg"
+                                                                fallbackSrc="/images/logo.png"
+                                                            />
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            )}
+                                                )}
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            </ModalBody>
+                            <ModalFooter>
+                                <Button variant="light" onPress={onPersonModalClose}>
+                                    Cancel
+                                </Button>
+                                <Button
+                                    color="primary"
+                                    type="submit"
+                                    isLoading={saving}
+                                >
+                                    {editingPerson ? "Update" : "Create"}
+                                </Button>
+                            </ModalFooter>
+                        </Form>
+                    </ModalContent>
+                </Modal>
+
+                {/* Role Modal */}
+                <Modal isOpen={isRoleModalOpen} onClose={onRoleModalClose}>
+                    <ModalContent>
+                        <ModalHeader>Add New Role</ModalHeader>
+                        <ModalBody>
+                            <Input
+                                label="Role Name"
+                                placeholder="Enter role name"
+                                value={roleForm.name}
+                                onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
+                            />
                         </ModalBody>
                         <ModalFooter>
-                            <Button variant="light" onPress={onPersonModalClose}>
+                            <Button variant="light" onPress={onRoleModalClose}>
                                 Cancel
                             </Button>
-                            <Button
-                                color="primary"
-                                type="submit"
-                                isLoading={saving}
-                            >
-                                {editingPerson ? "Update" : "Create"}
+                            <Button color="primary" onPress={handleRoleSubmit} isLoading={saving}>
+                                Create Role
                             </Button>
                         </ModalFooter>
-                    </Form>
-                </ModalContent>
-            </Modal>
+                    </ModalContent>
+                </Modal>
 
-            {/* Role Modal */}
-            <Modal isOpen={isRoleModalOpen} onClose={onRoleModalClose}>
-                <ModalContent>
-                    <ModalHeader>Add New Role</ModalHeader>
-                    <ModalBody>
-                        <Input
-                            label="Role Name"
-                            placeholder="Enter role name"
-                            value={roleForm.name}
-                            onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
-                        />
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="light" onPress={onRoleModalClose}>
-                            Cancel
-                        </Button>
-                        <Button color="primary" onPress={handleRoleSubmit} isLoading={saving}>
-                            Create Role
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
-
-            {/* Team Modal */}
-            <Modal isOpen={isTeamModalOpen} onClose={() => { resetTeamForm(); onTeamModalClose(); }}>
-                <ModalContent>
-                    <ModalHeader>{editingTeam ? "Edit Team" : "Add New Team"}</ModalHeader>
-                    <ModalBody>
-                        <Input
-                            label="Team Name"
-                            placeholder="Enter team name"
-                            value={teamForm.name}
-                            onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
-                        />
-                    </ModalBody>
-                    <ModalFooter>
-                        <Button variant="light" onPress={() => { resetTeamForm(); onTeamModalClose(); }}>
-                            Cancel
-                        </Button>
-                        <Button color="primary" onPress={handleTeamSubmit} isLoading={saving}>
-                            {editingTeam ? "Update" : "Create"} Team
-                        </Button>
-                    </ModalFooter>
-                </ModalContent>
-            </Modal>
-        </div>
+                {/* Team Modal */}
+                <Modal isOpen={isTeamModalOpen} onClose={() => { resetTeamForm(); onTeamModalClose(); }}>
+                    <ModalContent>
+                        <ModalHeader>{editingTeam ? "Edit Team" : "Add New Team"}</ModalHeader>
+                        <ModalBody>
+                            <Input
+                                label="Team Name"
+                                placeholder="Enter team name"
+                                value={teamForm.name}
+                                onChange={(e) => setTeamForm({ ...teamForm, name: e.target.value })}
+                            />
+                        </ModalBody>
+                        <ModalFooter>
+                            <Button variant="light" onPress={() => { resetTeamForm(); onTeamModalClose(); }}>
+                                Cancel
+                            </Button>
+                            <Button color="primary" onPress={handleTeamSubmit} isLoading={saving}>
+                                {editingTeam ? "Update" : "Create"} Team
+                            </Button>
+                        </ModalFooter>
+                    </ModalContent>
+                </Modal>
+            </div>
+        </RequirePermission>
     );
 }
